@@ -10,11 +10,11 @@ using namespace std;
 
 static vector<asm_param> parse_asm_params(string param)
 {
+	enum asm_token::token_type type = asm_token::UNKNOWN;
 	vector<asm_param> params;
 	size_t size, len = 0;
 	int depth = 0;
 	string token;
-
 
 	while (true) {
 		asm_param p;
@@ -33,22 +33,27 @@ static vector<asm_param> parse_asm_params(string param)
 				p.reset();
 				param = param.substr(1);
 			} else {
-				len = 1;
+				len  = 1;
+				type = asm_token::OPERATOR;
+
 			}
 			break;
 		case '+':
 		case '-':
 		case '*':
 		case '/':
-			len = 1;
+			len  = 1;
+			type = asm_token::OPERATOR;
 			break;
 		case '(':
 			depth += 1;
-			len = 1;
+			len    = 1;
+			type   = asm_token::OPERATOR;
 			break;
 		case ')':
 			depth -= 1;
-			len = 1;
+			len    = 1;
+			type   = asm_token::OPERATOR;
 			break;
 		case '.':
 		case '_':
@@ -63,6 +68,7 @@ static vector<asm_param> parse_asm_params(string param)
 				      (a >= '0' && a <= '9')))
 					break;
 			}
+			type = asm_token::IDENTIFIER;
 			break;
 		case '%':
 			/* Register */
@@ -73,6 +79,7 @@ static vector<asm_param> parse_asm_params(string param)
 				      (a >= '0' && a <= '9')))
 					break;
 			}
+			type = asm_token::REGISTER;
 			break;
 		case '$':
 			/* Constant number */
@@ -84,6 +91,7 @@ static vector<asm_param> parse_asm_params(string param)
 				      (a >= '0' && a <= '9')))
 					break;
 			}
+			type = asm_token::NUMBER;
 			break;
 		case '0' ... '9':
 			/* Offset numbers */
@@ -95,12 +103,13 @@ static vector<asm_param> parse_asm_params(string param)
 				      (a >= '0' && a <= '9')))
 					break;
 			}
+			type = asm_token::NUMBER;
 			break;
 		}
 
 		if (len) {
 			token = param.substr(0, len);
-			p.add_token(token);
+			p.add_token(asm_token(token, type));
 			param = param.substr(len);
 			len = 0;
 		}
@@ -109,7 +118,12 @@ static vector<asm_param> parse_asm_params(string param)
 	return params;
 }
 
-void asm_param::add_token(const string& token)
+asm_token::asm_token(const string& _token, enum asm_token::token_type _type)
+	: token(_token), type(_type)
+{
+}
+
+void asm_param::add_token(const asm_token& token)
 {
 	tokens.push_back(token);
 }

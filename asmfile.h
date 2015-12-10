@@ -32,12 +32,29 @@ enum stmt_type {
 	IDENT,
 };
 
+class asm_token {
+public:
+	enum token_type {
+		UNKNOWN,
+		OPERATOR,
+		IDENTIFIER,
+		REGISTER,
+		NUMBER,
+	};
+
+	asm_token(const std::string& _token, enum token_type _type);
+
+private:
+	std::string token;
+	token_type type;
+};
+
 class asm_param {
 private:
-	std::vector<std::string> tokens;
+	std::vector<asm_token> tokens;
 
 public:
-	void add_token(const std::string& token);
+	void add_token(const asm_token& token);
 	void reset();
 };
 
