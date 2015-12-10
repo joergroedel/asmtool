@@ -610,3 +610,25 @@ asm_function *asmfile::get_function(string name)
 
 	return func;
 }
+
+bool asmfile::has_function(std::string name) const
+{
+	for (vector<string>::const_iterator it = functions.begin();
+	     it != functions.end();
+	     it++) {
+		if (name == *it)
+			return true;
+	}
+
+	return false;
+}
+
+std::vector<std::string>::const_iterator asmfile::functions_begin() const
+{
+	return functions.begin();
+}
+
+std::vector<std::string>::const_iterator asmfile::functions_end() const
+{
+	return functions.end();
+}

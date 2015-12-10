@@ -164,6 +164,10 @@ public:
 	void analyze();
 
 	asm_function *get_function(std::string name);
+	bool has_function(std::string name) const;
+
+	std::vector<std::string>::const_iterator functions_begin() const;
+	std::vector<std::string>::const_iterator functions_end() const;
 };
 
 #endif

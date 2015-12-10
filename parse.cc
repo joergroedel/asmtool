@@ -8,13 +8,22 @@
 
 using namespace std;
 
-int parse(std::istream &is)
+asmfile *load_file(const char *name)
 {
-	string line;
-	asmfile file;
+	ifstream in(name);
+	asmfile *asm_file;
 
-	while (!is.eof()) {
-		getline(is, line);
+	if (!in.is_open()) {
+		cerr << "File not open: " << name << endl;
+		return 0;
+	}
+
+	asm_file = new asmfile();
+
+	while (!in.eof()) {
+		string line;
+
+		getline(in, line);
 
 		line = trim(strip_comment(line));
 
@@ -26,27 +35,50 @@ int parse(std::istream &is)
 		for (vector<string>::iterator it = lines.begin();
 		     it != lines.end();
 		     it++)
-			file.add_statement(statement(*it));
+			asm_file->add_statement(statement(*it));
 	}
 
-	file.analyze();
+	asm_file->analyze();
 
-	return 0;
+	in.close();
+
+	return asm_file;
+}
+
+void changes(asmfile *file1, asmfile *file2)
+{
+	for (vector<string>::const_iterator it = file2->functions_begin();
+	     it != file2->functions_end();
+	     it++) {
+		if (!file1->has_function(*it)) {
+			cout << "New function: " << *it << endl;
+			continue;
+		}
+
+		asm_function *func1 = file1->get_function(*it);
+		asm_function *func2 = file2->get_function(*it);
+
+		if (!(*func1 == *func2))
+			cout << "Changed function: " << *it << endl;
+
+		delete func1;
+		delete func2;
+		func1 = func2 = 0;
+	}
 }
 
 int main(int argc, char **argv)
 {
-	if (argc != 2) {
-		cerr << "File parameter required" << endl;
+	asmfile *file1, *file2;
+	if (argc != 3) {
+		cerr << "2 File parameters required" << endl;
 		return 1;
 	}
 
-	ifstream file(argv[1]);
-	if (!file.is_open())
-		cerr << "File not open: " << argv[1] << endl;
+	file1 = load_file(argv[1]);
+	file2 = load_file(argv[2]);
 
-	parse(file);
-	file.close();
+	changes(file1, file2);
 
 	return 0;
 }
