@@ -479,3 +479,60 @@ void asmfile::analyze()
 #endif
 }
 
+asm_function *asmfile::get_function(string name)
+{
+	bool in_text = false, old_text = false;
+	asm_function *func = 0;
+	int depth = 0;
+
+	for (vector<statement>::iterator it = statements.begin();
+	     it != statements.end();
+	     it++) {
+		stmt_type type = it->type();
+
+		/* Section tracking */
+		if (type == TEXT) {
+			in_text = true;
+			depth   = 0;
+		} else if (type == DATA) {
+			in_text = false;
+		} else if (type == PUSHSECTION) {
+			depth += 1;
+			old_text = in_text;
+		} else if (type == POPSECTION) {
+			depth -= 1;
+			if (depth == 0)
+				in_text = old_text;
+		} else if (type == SECTION) {
+			in_text = false;
+		}
+
+		/* Search for the function */
+		if (!func) {
+			if (type != LABEL)
+				continue;
+
+			if (it->obj_label()->get_label() != name)
+				continue;
+
+			func = new asm_function(name);
+
+			continue;
+		}
+
+		/* We found the function */
+
+		if (!in_text)
+			continue;
+
+		if (type == INSTRUCTION || type == LABEL)
+			func->add_statement(*it);
+
+		/* HACK: use better check for eofunc */
+		if (type == SIZE)
+			break;
+
+	}
+
+	return func;
+}

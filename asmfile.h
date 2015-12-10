@@ -150,6 +150,8 @@ public:
 	asmfile();
 	void add_statement(const statement &stmt);
 	void analyze();
+
+	asm_function *get_function(std::string name);
 };
 
 #endif
