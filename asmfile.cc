@@ -370,7 +370,7 @@ statement::statement(const std::string &line)
 	else if (_type == LABEL)
 		c_label = new asm_label(first);
 
-#if 1
+#if 0
 	cout << __stmt_name[_type] << " ";
 	for (vector<string>::iterator it =  params.begin(); it != params.end(); it++)
 		cout << '[' << *it << "] ";
