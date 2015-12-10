@@ -1,7 +1,9 @@
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "asmfile.h"
 #include "helper.h"
@@ -382,6 +384,51 @@ asm_type *statement::obj_type()
 asm_label *statement::obj_label()
 {
 	return c_label;
+}
+
+asm_function::asm_function(const string& _name)
+	: name(_name)
+{
+}
+
+void asm_function::add_statement(const statement& stmt)
+{
+	statements.push_back(stmt);
+}
+
+void asm_function::normalize()
+{
+	map<string, string> symbols;
+	ostringstream is;
+	int counter = 0;
+
+	/* Create replacements for function-local labels */
+	for (vector<statement>::iterator it = statements.begin();
+	     it != statements.end();
+	     it++)
+	{
+		asm_label *label;
+
+		if (it->type() != LABEL)
+			continue;
+
+		is << ".ADL" << counter;
+		label = it->obj_label();
+
+		symbols[label->get_label()] = is.str();
+		is.clear();
+		counter += 1;
+	}
+
+	/* Rename labels */
+	for (vector<statement>::iterator it = statements.begin();
+	     it != statements.end();
+	     it++) {
+		for (map<string, string>::iterator sym = symbols.begin();
+		     sym != symbols.end();
+		     sym++)
+			it->rename_label(sym->first, sym->second);
+	}
 }
 
 asmfile::asmfile()

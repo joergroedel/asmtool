@@ -121,10 +121,23 @@ public:
 	statement(const statement& stmt);
 	~statement();
 	stmt_type type() const;
+	void rename_label(std::string from, std::string to);
 
 	asm_instruction	*obj_intruction();
 	asm_type	*obj_type();
 	asm_label	*obj_label();
+};
+
+class asm_function {
+private:
+	std::string name;
+	std::vector<statement> statements;
+
+	void normalize();
+
+public:
+	asm_function(const std::string& name);
+	void add_statement(const statement &stmt);
 };
 
 class asmfile {
