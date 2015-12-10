@@ -21,7 +21,12 @@ int parse(std::istream &is)
 		if (line == "")
 			continue;
 
-		file.add_statement(statement(line));
+		vector<string> lines = split_trim(";", line);
+
+		for (vector<string>::iterator it = lines.begin();
+		     it != lines.end();
+		     it++)
+			file.add_statement(statement(*it));
 	}
 
 	file.analyze();
