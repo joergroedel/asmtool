@@ -145,11 +145,11 @@ private:
 
 	void normalize();
 
-	bool operator==(const asm_function &func) const;
-
 public:
 	asm_function(const std::string& name);
 	void add_statement(const statement &stmt);
+
+	bool operator==(const asm_function &func) const;
 };
 
 class asmfile {
