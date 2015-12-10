@@ -47,6 +47,8 @@ public:
 	void set_token(std::string _token);
 	const std::string& get_token() const;
 
+	bool operator==(const asm_token& _token) const;
+
 private:
 	std::string token;
 	token_type type;
@@ -60,6 +62,8 @@ public:
 	void add_token(const asm_token& token);
 	void reset();
 	void rename_label(std::string from, std::string to);
+
+	bool operator==(const asm_param& _param) const;
 };
 
 class asm_instruction {
@@ -71,6 +75,8 @@ private:
 public:
 	asm_instruction(std::string _instruction, std::string _param);
 	void rename_label(std::string from, std::string to);
+
+	bool operator==(const asm_instruction& _instruction) const;
 };
 
 class asm_type {
@@ -103,6 +109,8 @@ public:
 	asm_label(std::string _label);
 	const std::string& get_label() const;
 	void set_label(std::string _label);
+
+	bool operator==(const asm_label& _label) const;
 };
 
 class statement {
@@ -123,6 +131,8 @@ public:
 	stmt_type type() const;
 	void rename_label(std::string from, std::string to);
 
+	bool operator==(const statement& _statement) const;
+
 	asm_instruction	*obj_intruction();
 	asm_type	*obj_type();
 	asm_label	*obj_label();
@@ -134,6 +144,8 @@ private:
 	std::vector<statement> statements;
 
 	void normalize();
+
+	bool operator==(const asm_function &func) const;
 
 public:
 	asm_function(const std::string& name);
