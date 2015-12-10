@@ -123,6 +123,21 @@ asm_token::asm_token(const string& _token, enum asm_token::token_type _type)
 {
 }
 
+enum asm_token::token_type asm_token::get_type() const
+{
+	return type;
+}
+
+void asm_token::set_token(string _token)
+{
+	token = _token;
+}
+
+const std::string& asm_token::get_token() const
+{
+	return token;
+}
+
 void asm_param::add_token(const asm_token& token)
 {
 	tokens.push_back(token);
@@ -133,10 +148,31 @@ void asm_param::reset()
 	tokens.clear();
 }
 
+void asm_param::rename_label(string from, string to)
+{
+	for (vector<asm_token>::iterator it = tokens.begin();
+	     it != tokens.end();
+	     it++) {
+		if (it->get_type() != asm_token::IDENTIFIER)
+			continue;
+		if (it->get_token() != from)
+			continue;
+		it->set_token(to);
+	}
+}
+
 asm_instruction::asm_instruction(std::string _instruction, std::string _param)
 	: instruction(_instruction), param(_param)
 {
 	params = parse_asm_params(param);
+}
+
+void asm_instruction::rename_label(string from, string to)
+{
+	for (vector<asm_param>::iterator it = params.begin();
+	     it != params.end();
+	     it++)
+		it->rename_label(from, to);
 }
 
 enum asm_type::asm_symbol_type asm_type::get_symbol_type(string param)
@@ -177,6 +213,11 @@ asm_label::asm_label(std::string _label)
 const std::string& asm_label::get_label() const
 {
 	return label;
+}
+
+void asm_label::set_label(string _label)
+{
+	label = _label;
 }
 
 const struct stmt_map {
@@ -318,6 +359,14 @@ statement::~statement()
 stmt_type statement::type() const
 {
 	return _type;
+}
+
+void statement::rename_label(std::string from, std::string to)
+{
+	if (_type == LABEL && c_label->get_label() == from)
+		c_label->set_label(to);
+	else if (_type == INSTRUCTION)
+		c_instruction->rename_label(from, to);
 }
 
 asm_instruction *statement::obj_intruction()

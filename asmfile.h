@@ -43,6 +43,9 @@ public:
 	};
 
 	asm_token(const std::string& _token, enum token_type _type);
+	token_type get_type() const;
+	void set_token(std::string _token);
+	const std::string& get_token() const;
 
 private:
 	std::string token;
@@ -56,6 +59,7 @@ private:
 public:
 	void add_token(const asm_token& token);
 	void reset();
+	void rename_label(std::string from, std::string to);
 };
 
 class asm_instruction {
@@ -66,6 +70,7 @@ private:
 
 public:
 	asm_instruction(std::string _instruction, std::string _param);
+	void rename_label(std::string from, std::string to);
 };
 
 class asm_type {
@@ -97,6 +102,7 @@ private:
 public:
 	asm_label(std::string _label);
 	const std::string& get_label() const;
+	void set_label(std::string _label);
 };
 
 class statement {
