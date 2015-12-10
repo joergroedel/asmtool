@@ -32,10 +32,20 @@ enum stmt_type {
 	IDENT,
 };
 
+class asm_param {
+private:
+	std::vector<std::string> tokens;
+
+public:
+	void add_token(const std::string& token);
+	void reset();
+};
+
 class asm_instruction {
 private:
 	std::string instruction;
 	std::string param;
+	std::vector<asm_param> params;
 
 public:
 	asm_instruction(std::string _instruction, std::string _param);

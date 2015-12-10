@@ -8,9 +8,121 @@
 
 using namespace std;
 
+static vector<asm_param> parse_asm_params(string param)
+{
+	vector<asm_param> params;
+	size_t size, len = 0;
+	int depth = 0;
+	string token;
+
+
+	while (true) {
+		asm_param p;
+
+		param = trim(param);
+		size  = param.size();
+
+		if (size == 0)
+			break;
+
+		switch (param[0]) {
+		/* Operators */
+		case ',':
+			if (depth == 0) {
+				params.push_back(p);
+				p.reset();
+				param = param.substr(1);
+			} else {
+				len = 1;
+			}
+			break;
+		case '+':
+		case '-':
+		case '*':
+		case '/':
+			len = 1;
+			break;
+		case '(':
+			depth += 1;
+			len = 1;
+			break;
+		case ')':
+			depth -= 1;
+			len = 1;
+			break;
+		case '.':
+		case '_':
+		case 'A' ... 'Z':
+		case 'a' ... 'z':
+			/* Identifier */
+			for (len = 1; len < size; len++) {
+				char a = param[len];
+				if (!((a == '.') || (a == '_') ||
+				      (a >= 'a' && a <= 'z') ||
+				      (a >= 'A' && a <= 'Z') ||
+				      (a >= '0' && a <= '9')))
+					break;
+			}
+			break;
+		case '%':
+			/* Register */
+			for (len = 1; len < size; len++) {
+				char a = param[len];
+				if (!((a >= 'a' && a <= 'z') ||
+				      (a >= 'A' && a <= 'Z') ||
+				      (a >= '0' && a <= '9')))
+					break;
+			}
+			break;
+		case '$':
+			/* Constant number */
+			for (len = 1; len < size; len++) {
+				char a = param[len];
+				if (!((len == 2 && (a == 'x' || a == 'X')) ||
+				      (a >= 'a' && a <= 'f') ||
+				      (a >= 'A' && a <= 'F') ||
+				      (a >= '0' && a <= '9')))
+					break;
+			}
+			break;
+		case '0' ... '9':
+			/* Offset numbers */
+			for (len = 1; len < size; len++) {
+				char a = param[len];
+				if (!((len == 1 && (a == 'x' || a == 'X')) ||
+				      (a >= 'a' && a <= 'f') ||
+				      (a >= 'A' && a <= 'F') ||
+				      (a >= '0' && a <= '9')))
+					break;
+			}
+			break;
+		}
+
+		if (len) {
+			token = param.substr(0, len);
+			p.add_token(token);
+			param = param.substr(len);
+			len = 0;
+		}
+	}
+
+	return params;
+}
+
+void asm_param::add_token(const string& token)
+{
+	tokens.push_back(token);
+}
+
+void asm_param::reset()
+{
+	tokens.clear();
+}
+
 asm_instruction::asm_instruction(std::string _instruction, std::string _param)
 	: instruction(_instruction), param(_param)
 {
+	params = parse_asm_params(param);
 }
 
 enum asm_type::asm_symbol_type asm_type::get_symbol_type(string param)
