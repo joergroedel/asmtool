@@ -1,0 +1,5 @@
+asmtool
+*.o
+*.s
+*~
+*.swp
