@@ -324,7 +324,7 @@ const char *__stmt_name[] = {
 	[IDENT]		= "IDENT",
 };
 
-statement::statement(const std::string &line)
+asm_statement::asm_statement(const std::string &line)
 	: c_instruction(0)
 {
 	string first, second;
@@ -380,7 +380,7 @@ statement::statement(const std::string &line)
 #endif
 }
 
-statement::statement(const statement& stmt)
+asm_statement::asm_statement(const asm_statement& stmt)
 	: c_instruction(0)
 {
 	_type = stmt._type;
@@ -393,7 +393,7 @@ statement::statement(const statement& stmt)
 		c_label = new asm_label(*stmt.c_label);
 }
 
-statement::~statement()
+asm_statement::~asm_statement()
 {
 	if (_type == INSTRUCTION && c_instruction)
 		delete c_instruction;
@@ -403,12 +403,12 @@ statement::~statement()
 		delete c_label;
 }
 
-stmt_type statement::type() const
+stmt_type asm_statement::type() const
 {
 	return _type;
 }
 
-void statement::rename_label(std::string from, std::string to)
+void asm_statement::rename_label(std::string from, std::string to)
 {
 	if (_type == LABEL && c_label->get_label() == from)
 		c_label->set_label(to);
@@ -416,7 +416,7 @@ void statement::rename_label(std::string from, std::string to)
 		c_instruction->rename_label(from, to);
 }
 
-bool statement::operator==(const statement& _statement) const
+bool asm_statement::operator==(const asm_statement& _statement) const
 {
 	if (_type != _statement._type)
 		return false;
@@ -429,17 +429,17 @@ bool statement::operator==(const statement& _statement) const
 		return false;
 }
 
-asm_instruction *statement::obj_intruction()
+asm_instruction *asm_statement::obj_intruction()
 {
 	return c_instruction;
 }
 
-asm_type *statement::obj_type()
+asm_type *asm_statement::obj_type()
 {
 	return c_type;
 }
 
-asm_label *statement::obj_label()
+asm_label *asm_statement::obj_label()
 {
 	return c_label;
 }
@@ -449,7 +449,7 @@ asm_function::asm_function(const string& _name)
 {
 }
 
-void asm_function::add_statement(const statement& stmt)
+void asm_function::add_statement(const asm_statement& stmt)
 {
 	statements.push_back(stmt);
 }
@@ -461,7 +461,7 @@ void asm_function::normalize()
 	int counter = 0;
 
 	/* Create replacements for function-local labels */
-	for (vector<statement>::iterator it = statements.begin();
+	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++)
 	{
@@ -479,7 +479,7 @@ void asm_function::normalize()
 	}
 
 	/* Rename labels */
-	for (vector<statement>::iterator it = statements.begin();
+	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
 		for (map<string, string>::iterator sym = symbols.begin();
@@ -512,7 +512,7 @@ asmfile::asmfile()
 {
 }
 
-void asmfile::add_statement(const statement &stmt)
+void asmfile::add_statement(const asm_statement &stmt)
 {
 	statements.push_back(stmt);
 }
@@ -521,7 +521,7 @@ void asmfile::analyze()
 {
 	asm_type *c_type;
 
-	for (vector<statement>::iterator it = statements.begin();
+	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
 		if (it->type() != TYPE)
@@ -561,7 +561,7 @@ asm_function *asmfile::get_function(string name)
 	asm_function *func = 0;
 	int depth = 0;
 
-	for (vector<statement>::iterator it = statements.begin();
+	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
 		stmt_type type = it->type();

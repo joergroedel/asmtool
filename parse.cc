@@ -35,7 +35,7 @@ asmfile *load_file(const char *name)
 		for (vector<string>::iterator it = lines.begin();
 		     it != lines.end();
 		     it++)
-			asm_file->add_statement(statement(*it));
+			asm_file->add_statement(asm_statement(*it));
 	}
 
 	asm_file->analyze();

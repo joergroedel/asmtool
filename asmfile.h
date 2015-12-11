@@ -113,7 +113,7 @@ public:
 	bool operator==(const asm_label& _label) const;
 };
 
-class statement {
+class asm_statement {
 private:
 	stmt_type _type;
 	std::vector<std::string> params;
@@ -125,13 +125,13 @@ private:
 	};
 
 public:
-	statement(const std::string &line);
-	statement(const statement& stmt);
-	~statement();
+	asm_statement(const std::string &line);
+	asm_statement(const asm_statement& stmt);
+	~asm_statement();
 	stmt_type type() const;
 	void rename_label(std::string from, std::string to);
 
-	bool operator==(const statement& _statement) const;
+	bool operator==(const asm_statement& _statement) const;
 
 	asm_instruction	*obj_intruction();
 	asm_type	*obj_type();
@@ -141,11 +141,11 @@ public:
 class asm_function {
 private:
 	std::string name;
-	std::vector<statement> statements;
+	std::vector<asm_statement> statements;
 
 public:
 	asm_function(const std::string& name);
-	void add_statement(const statement &stmt);
+	void add_statement(const asm_statement &stmt);
 
 	void normalize();
 
@@ -154,13 +154,13 @@ public:
 
 class asmfile {
 private:
-	std::vector<statement>		statements;
+	std::vector<asm_statement>		statements;
 	std::vector<std::string>	functions;
 	std::vector<std::string>	objects;
 
 public:
 	asmfile();
-	void add_statement(const statement &stmt);
+	void add_statement(const asm_statement &stmt);
 	void analyze();
 
 	asm_function *get_function(std::string name);
