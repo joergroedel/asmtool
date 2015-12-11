@@ -187,6 +187,9 @@ static void diff(asm_file *file1, asm_file *file2, ostream &os)
 	for (vector<string>::const_iterator it = file2->functions.begin();
 	     it != file2->functions.end();
 	     it++) {
+		if (generated_symbol(*it))
+			continue;
+
 		if (!file1->has_function(*it)) {
 			new_functions.push_back(*it);
 			continue;
@@ -207,6 +210,9 @@ static void diff(asm_file *file1, asm_file *file2, ostream &os)
 	for (vector<string>::const_iterator it = file1->functions.begin();
 	     it != file1->functions.end();
 	     it++) {
+		if (generated_symbol(*it))
+			continue;
+
 		if (!file2->has_function(*it))
 			removed_functions.push_back(*it);
 	}
