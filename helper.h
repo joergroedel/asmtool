@@ -17,5 +17,6 @@ std::string strip_comment(const std::string &line);
 std::vector<std::string> split_trim(const char *delim,
 					   std::string line,
 					   unsigned splits = 0);
+bool generated_symbol(std::string symbol);
 
 #endif
