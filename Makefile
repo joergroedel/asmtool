@@ -1,12 +1,12 @@
-OBJ=parse.o helper.o asmfile.o
+OBJ=asmtool.o helper.o asmfile.o
 CXXFLAGS=-O3 -g
 
-all: parse
+all: asmtool
 
 clean:
 	rm -f parse ${OBJ}
 
-parse: ${OBJ}
-	g++ -o parse ${OBJ}
+asmtool: ${OBJ}
+	g++ -o asmtool ${OBJ}
 
 .PHONY: clean
