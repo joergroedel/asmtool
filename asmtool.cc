@@ -54,18 +54,71 @@ asm_file *load_file(const char *name)
 	return file;
 }
 
-int main(int argc, char **argv)
+static int command_diff(int argc, char **argv)
 {
 	asm_file *file1, *file2;
-	if (argc != 3) {
+	bool verbose = false;
+
+	while (argc) {
+		string option;
+
+		argv += 1;
+		argc -= 1;
+
+		option = argv[0];
+		if (!option.size())
+			continue;
+
+		if (option[0] != '-')
+			break;
+
+		if (option == "-v") {
+			verbose = true;
+		} else {
+			cerr << "Unknown option: " << option << endl;
+			return 1;
+		}
+	}
+
+	if (argc != 2) {
 		cerr << "2 File parameters required" << endl;
 		return 1;
 	}
 
-	file1 = load_file(argv[1]);
-	file2 = load_file(argv[2]);
+	file1 = load_file(argv[0]);
+	file2 = load_file(argv[1]);
+
+	if (!file1 || !file2)
+		return 1;
 
 	diff(file1, file2, cout);
+
+	return 0;
+}
+
+void usage(const char *cmd)
+{
+	cout << "Usage: " << cmd << " <subcommand> <options>" << endl;
+	cout << "Available subcommands:" << endl;
+	cout << "        diff - Show changed functions between assembly files" << endl;
+	cout << "        help - Print this message" << endl;
+}
+
+int main(int argc, char **argv)
+{
+	string command;
+
+	if (argc < 2) {
+		usage(argv[0]);
+		return 1;
+	}
+
+	command = argv[1];
+
+	if (command == "diff")
+		return command_diff(argc - 1, argv + 1);
+	else if (command == "help")
+		usage(argv[0]);
 
 	return 0;
 }
