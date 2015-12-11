@@ -47,8 +47,8 @@ asm_file *load_file(const char *name)
 
 void changes(asm_file *file1, asm_file *file2)
 {
-	for (vector<string>::const_iterator it = file2->functions_begin();
-	     it != file2->functions_end();
+	for (vector<string>::const_iterator it = file2->functions.begin();
+	     it != file2->functions.end();
 	     it++) {
 		if (!file1->has_function(*it)) {
 			cout << "New function: " << *it << endl;

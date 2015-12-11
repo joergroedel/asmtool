@@ -127,21 +127,6 @@ asm_token::asm_token(const string& _token, enum asm_token::token_type _type)
 {
 }
 
-enum asm_token::token_type asm_token::get_type() const
-{
-	return type;
-}
-
-void asm_token::set_token(string _token)
-{
-	token = _token;
-}
-
-const std::string& asm_token::get_token() const
-{
-	return token;
-}
-
 bool asm_token::operator==(const asm_token& _token) const
 {
 	return (type == _token.type) && (token == _token.token);
@@ -162,11 +147,11 @@ void asm_param::rename_label(string from, string to)
 	for (vector<asm_token>::iterator it = tokens.begin();
 	     it != tokens.end();
 	     it++) {
-		if (it->get_type() != asm_token::IDENTIFIER)
+		if (it->type != asm_token::IDENTIFIER)
 			continue;
-		if (it->get_token() != from)
+		if (it->token != from)
 			continue;
-		it->set_token(to);
+		it->token = to;
 	}
 }
 
@@ -237,29 +222,9 @@ asm_type::asm_type(std::string _param)
 		type = get_symbol_type(items[1]);
 }
 
-const std::string& asm_type::get_symbol() const
-{
-	return symbol;
-}
-
-enum asm_type::asm_symbol_type asm_type::get_symbol_type() const
-{
-	return type;
-}
-
 asm_label::asm_label(std::string _label)
 	: label(_label)
 {
-}
-
-const std::string& asm_label::get_label() const
-{
-	return label;
-}
-
-void asm_label::set_label(string _label)
-{
-	label = _label;
 }
 
 bool asm_label::operator==(const asm_label& _label) const
@@ -325,7 +290,7 @@ const char *__stmt_name[] = {
 };
 
 asm_statement::asm_statement(const std::string &line)
-	: c_instruction(0)
+	: obj_instruction(0)
 {
 	string first, second;
 	const stmt_map *map;
@@ -366,11 +331,11 @@ asm_statement::asm_statement(const std::string &line)
 		second = params[1];
 
 	if (_type == INSTRUCTION)
-		c_instruction = new asm_instruction(first, second);
+		obj_instruction = new asm_instruction(first, second);
 	else if (_type == TYPE)
-		c_type = new asm_type(first);
+		obj_type = new asm_type(first);
 	else if (_type == LABEL)
-		c_label = new asm_label(first);
+		obj_label = new asm_label(first);
 
 #if 0
 	cout << __stmt_name[_type] << " ";
@@ -381,39 +346,34 @@ asm_statement::asm_statement(const std::string &line)
 }
 
 asm_statement::asm_statement(const asm_statement& stmt)
-	: c_instruction(0)
+	: obj_instruction(0)
 {
 	_type = stmt._type;
 
-	if (_type == INSTRUCTION && stmt.c_instruction)
-		c_instruction = new asm_instruction(*stmt.c_instruction);
-	else if (_type == TYPE && stmt.c_type)
-		c_type = new asm_type(*stmt.c_type);
-	else if (_type == LABEL && stmt.c_label)
-		c_label = new asm_label(*stmt.c_label);
+	if (_type == INSTRUCTION && stmt.obj_instruction)
+		obj_instruction = new asm_instruction(*stmt.obj_instruction);
+	else if (_type == TYPE && stmt.obj_type)
+		obj_type = new asm_type(*stmt.obj_type);
+	else if (_type == LABEL && stmt.obj_label)
+		obj_label = new asm_label(*stmt.obj_label);
 }
 
 asm_statement::~asm_statement()
 {
-	if (_type == INSTRUCTION && c_instruction)
-		delete c_instruction;
-	else if (_type == TYPE && c_type)
-		delete c_type;
-	else if (_type == LABEL && c_label)
-		delete c_label;
-}
-
-stmt_type asm_statement::type() const
-{
-	return _type;
+	if (_type == INSTRUCTION && obj_instruction)
+		delete obj_instruction;
+	else if (_type == TYPE && obj_type)
+		delete obj_type;
+	else if (_type == LABEL && obj_label)
+		delete obj_label;
 }
 
 void asm_statement::rename_label(std::string from, std::string to)
 {
-	if (_type == LABEL && c_label->get_label() == from)
-		c_label->set_label(to);
+	if (_type == LABEL && obj_label->label == from)
+		obj_label->label = to;
 	else if (_type == INSTRUCTION)
-		c_instruction->rename_label(from, to);
+		obj_instruction->rename_label(from, to);
 }
 
 bool asm_statement::operator==(const asm_statement& _statement) const
@@ -422,26 +382,11 @@ bool asm_statement::operator==(const asm_statement& _statement) const
 		return false;
 
 	if (_type == INSTRUCTION)
-		return *c_instruction == *_statement.c_instruction;
+		return *obj_instruction == *_statement.obj_instruction;
 	else if (_type == LABEL)
-		return *c_label == *_statement.c_label;
+		return *obj_label == *_statement.obj_label;
 	else
 		return false;
-}
-
-asm_instruction *asm_statement::obj_intruction()
-{
-	return c_instruction;
-}
-
-asm_type *asm_statement::obj_type()
-{
-	return c_type;
-}
-
-asm_label *asm_statement::obj_label()
-{
-	return c_label;
 }
 
 asm_function::asm_function(const string& _name)
@@ -467,13 +412,13 @@ void asm_function::normalize()
 	{
 		asm_label *label;
 
-		if (it->type() != LABEL)
+		if (it->_type != LABEL)
 			continue;
 
 		is << ".ADL" << counter;
-		label = it->obj_label();
+		label = it->obj_label;
 
-		symbols[label->get_label()] = is.str();
+		symbols[label->label] = is.str();
 		is.clear();
 		counter += 1;
 	}
@@ -519,22 +464,22 @@ void asm_file::add_statement(const asm_statement &stmt)
 
 void asm_file::analyze()
 {
-	asm_type *c_type;
+	asm_type *obj_type;
 
 	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
-		if (it->type() != TYPE)
+		if (it->_type != TYPE)
 			continue;
 
-		c_type = it->obj_type();
+		obj_type = it->obj_type;
 
-		if (c_type->get_symbol_type() == asm_type::FUNCTION)
-			functions.push_back(c_type->get_symbol());
-		else if (c_type->get_symbol_type() == asm_type::OBJECT)
-			objects.push_back(c_type->get_symbol());
+		if (obj_type->type == asm_type::FUNCTION)
+			functions.push_back(obj_type->symbol);
+		else if (obj_type->type == asm_type::OBJECT)
+			objects.push_back(obj_type->symbol);
 		else
-			cerr << "Unknown type " << c_type->get_symbol() << endl;
+			cerr << "Unknown type " << obj_type->symbol << endl;
 	}
 
 	sort(functions.begin(), functions.end());
@@ -564,7 +509,7 @@ asm_function *asm_file::get_function(string name)
 	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
-		stmt_type type = it->type();
+		stmt_type type = it->_type;
 
 		/* Section tracking */
 		if (type == TEXT) {
@@ -588,7 +533,7 @@ asm_function *asm_file::get_function(string name)
 			if (type != LABEL)
 				continue;
 
-			if (it->obj_label()->get_label() != name)
+			if (it->obj_label->label != name)
 				continue;
 
 			func = new asm_function(name);
@@ -627,12 +572,3 @@ bool asm_file::has_function(std::string name) const
 	return false;
 }
 
-std::vector<std::string>::const_iterator asm_file::functions_begin() const
-{
-	return functions.begin();
-}
-
-std::vector<std::string>::const_iterator asm_file::functions_end() const
-{
-	return functions.end();
-}
