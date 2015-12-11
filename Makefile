@@ -1,12 +1,13 @@
-OBJ=asmtool.o helper.o asmfile.o
+OBJ=$(patsubst %.cc, %.o, $(wildcard *.cc))
 CXXFLAGS=-O3 -g
+TARGET=asmtool
 
-all: asmtool
+all: $(TARGET)
+
+$(TARGET): ${OBJ}
+	g++ -o $@ ${OBJ}
 
 clean:
-	rm -f parse ${OBJ}
-
-asmtool: ${OBJ}
-	g++ -o asmtool ${OBJ}
+	rm -f $(TARGET) ${OBJ}
 
 .PHONY: clean
