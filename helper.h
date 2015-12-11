@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2015 SUSE Linux GmbH
+ *
+ * All rights reserved.
+ *
+ * Author: Joerg Roedel <jroedel@suse.de>
+ */
+
 #ifndef __HELPER_H
 #define __HELPER_H
 

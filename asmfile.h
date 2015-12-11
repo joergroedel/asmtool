@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2015 SUSE Linux GmbH
+ *
+ * All rights reserved.
+ *
+ * Author: Joerg Roedel <jroedel@suse.de>
+ */
+
 #ifndef __ASMFILE_H
 #define __ASMFILE_H
 
