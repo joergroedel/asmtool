@@ -101,7 +101,7 @@ struct asm_label {
 
 struct asm_statement {
 
-	stmt_type _type;
+	stmt_type type;
 	std::vector<std::string> params;
 
 	union {

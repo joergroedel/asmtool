@@ -300,25 +300,25 @@ asm_statement::asm_statement(const std::string &line)
 	if (items.size() == 0)
 		return;
 
-	_type = NOSTMT;
+	type = NOSTMT;
 
 	for (map = __stmt_map; map->type != NOSTMT; map++) {
 		if (items[0] == map->str) {
-			_type = map->type;
+			type = map->type;
 			i = 1;
 			break;
 		}
 	}
 
-	if (_type == NOSTMT) {
+	if (type == NOSTMT) {
 		if (items[0].at(items[0].size()-1) == ':') {
-			_type = LABEL;
+			type = LABEL;
 			items[0].erase(items[0].end() - 1);
 		} else if (items[0][0] == '.') {
 			cout << "Unknown item: " << items[0] << endl;
 			return;
 		} else {
-			_type = INSTRUCTION;
+			type = INSTRUCTION;
 		}
 	}
 
@@ -330,15 +330,15 @@ asm_statement::asm_statement(const std::string &line)
 	if (params.size() > 1)
 		second = params[1];
 
-	if (_type == INSTRUCTION)
+	if (type == INSTRUCTION)
 		obj_instruction = new asm_instruction(first, second);
-	else if (_type == TYPE)
+	else if (type == TYPE)
 		obj_type = new asm_type(first);
-	else if (_type == LABEL)
+	else if (type == LABEL)
 		obj_label = new asm_label(first);
 
 #if 0
-	cout << __stmt_name[_type] << " ";
+	cout << __stmt_name[type] << " ";
 	for (vector<string>::iterator it =  params.begin(); it != params.end(); it++)
 		cout << '[' << *it << "] ";
 	cout << endl;
@@ -348,42 +348,42 @@ asm_statement::asm_statement(const std::string &line)
 asm_statement::asm_statement(const asm_statement& stmt)
 	: obj_instruction(0)
 {
-	_type = stmt._type;
+	type = stmt.type;
 
-	if (_type == INSTRUCTION && stmt.obj_instruction)
+	if (type == INSTRUCTION && stmt.obj_instruction)
 		obj_instruction = new asm_instruction(*stmt.obj_instruction);
-	else if (_type == TYPE && stmt.obj_type)
+	else if (type == TYPE && stmt.obj_type)
 		obj_type = new asm_type(*stmt.obj_type);
-	else if (_type == LABEL && stmt.obj_label)
+	else if (type == LABEL && stmt.obj_label)
 		obj_label = new asm_label(*stmt.obj_label);
 }
 
 asm_statement::~asm_statement()
 {
-	if (_type == INSTRUCTION && obj_instruction)
+	if (type == INSTRUCTION && obj_instruction)
 		delete obj_instruction;
-	else if (_type == TYPE && obj_type)
+	else if (type == TYPE && obj_type)
 		delete obj_type;
-	else if (_type == LABEL && obj_label)
+	else if (type == LABEL && obj_label)
 		delete obj_label;
 }
 
 void asm_statement::rename_label(std::string from, std::string to)
 {
-	if (_type == LABEL && obj_label->label == from)
+	if (type == LABEL && obj_label->label == from)
 		obj_label->label = to;
-	else if (_type == INSTRUCTION)
+	else if (type == INSTRUCTION)
 		obj_instruction->rename_label(from, to);
 }
 
 bool asm_statement::operator==(const asm_statement& _statement) const
 {
-	if (_type != _statement._type)
+	if (type != _statement.type)
 		return false;
 
-	if (_type == INSTRUCTION)
+	if (type == INSTRUCTION)
 		return *obj_instruction == *_statement.obj_instruction;
-	else if (_type == LABEL)
+	else if (type == LABEL)
 		return *obj_label == *_statement.obj_label;
 	else
 		return false;
@@ -412,7 +412,7 @@ void asm_function::normalize()
 	{
 		asm_label *label;
 
-		if (it->_type != LABEL)
+		if (it->type != LABEL)
 			continue;
 
 		is << ".ADL" << counter;
@@ -469,7 +469,7 @@ void asm_file::analyze()
 	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
-		if (it->_type != TYPE)
+		if (it->type != TYPE)
 			continue;
 
 		obj_type = it->obj_type;
@@ -509,7 +509,7 @@ asm_function *asm_file::get_function(string name)
 	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
-		stmt_type type = it->_type;
+		stmt_type type = it->type;
 
 		/* Section tracking */
 		if (type == TEXT) {
