@@ -113,6 +113,8 @@ static vector<asm_param> parse_asm_params(string param)
 			token = param.substr(0, len);
 			p.add_token(asm_token(token, type));
 			param = param.substr(len);
+			if (len == size)
+				params.push_back(p);
 			len = 0;
 		}
 	}
