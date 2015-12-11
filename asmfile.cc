@@ -610,6 +610,8 @@ asm_function *asmfile::get_function(string name)
 
 	}
 
+	func->normalize();
+
 	return func;
 }
 

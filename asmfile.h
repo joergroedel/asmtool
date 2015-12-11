@@ -143,11 +143,11 @@ private:
 	std::string name;
 	std::vector<statement> statements;
 
-	void normalize();
-
 public:
 	asm_function(const std::string& name);
 	void add_statement(const statement &stmt);
+
+	void normalize();
 
 	bool operator==(const asm_function &func) const;
 };
