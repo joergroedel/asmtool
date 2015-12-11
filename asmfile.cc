@@ -127,11 +127,6 @@ asm_token::asm_token(const string& _token, enum asm_token::token_type _type)
 {
 }
 
-bool asm_token::operator==(const asm_token& _token) const
-{
-	return (type == _token.type) && (token == _token.token);
-}
-
 void asm_param::add_token(const asm_token& token)
 {
 	tokens.push_back(token);
@@ -155,21 +150,6 @@ void asm_param::rename_label(string from, string to)
 	}
 }
 
-bool asm_param::operator==(const asm_param& _param) const
-{
-	size_t size = tokens.size();
-
-	if (_param.tokens.size() != size)
-		return false;
-
-	for (int i = 0; i < size; i++) {
-		if (!(tokens[i] == _param.tokens[i]))
-			return false;
-	}
-
-	return true;
-}
-
 asm_instruction::asm_instruction(std::string _instruction, std::string _param)
 	: instruction(_instruction), param(_param)
 {
@@ -182,24 +162,6 @@ void asm_instruction::rename_label(string from, string to)
 	     it != params.end();
 	     it++)
 		it->rename_label(from, to);
-}
-
-bool asm_instruction::operator==(const asm_instruction& _instruction) const
-{
-	size_t size = params.size();
-
-	if (instruction != _instruction.instruction)
-		return false;
-
-	if (_instruction.params.size() != size)
-		return false;
-
-	for (int i = 0; i < size; i++) {
-		if (!(params[i] == _instruction.params[i]))
-			return false;
-	}
-
-	return true;
 }
 
 enum asm_type::asm_symbol_type asm_type::get_symbol_type(string param)
@@ -225,11 +187,6 @@ asm_type::asm_type(std::string _param)
 asm_label::asm_label(std::string _label)
 	: label(_label)
 {
-}
-
-bool asm_label::operator==(const asm_label& _label) const
-{
-	return label == _label.label;
 }
 
 const struct stmt_map {
@@ -376,19 +333,6 @@ void asm_statement::rename_label(std::string from, std::string to)
 		obj_instruction->rename_label(from, to);
 }
 
-bool asm_statement::operator==(const asm_statement& _statement) const
-{
-	if (type != _statement.type)
-		return false;
-
-	if (type == INSTRUCTION)
-		return *obj_instruction == *_statement.obj_instruction;
-	else if (type == LABEL)
-		return *obj_label == *_statement.obj_label;
-	else
-		return false;
-}
-
 asm_function::asm_function(const string& _name)
 	: name(_name)
 {
@@ -432,24 +376,6 @@ void asm_function::normalize()
 		     sym++)
 			it->rename_label(sym->first, sym->second);
 	}
-}
-
-bool asm_function::operator==(const asm_function &func) const
-{
-	size_t size = statements.size();
-
-	if (name != func.name)
-		return false;
-
-	if (size != func.statements.size())
-		return false;
-
-	for (int i = 0; i < size; i++) {
-		if (!(statements[i] == func.statements[i]))
-			return false;
-	}
-
-	return true;
 }
 
 asm_file::asm_file()

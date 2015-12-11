@@ -46,9 +46,6 @@ public:
 	token_type type;
 
 	asm_token(const std::string& _token, enum token_type _type);
-
-	bool operator==(const asm_token& _token) const;
-
 };
 
 struct asm_param {
@@ -58,8 +55,6 @@ struct asm_param {
 	void add_token(const asm_token& token);
 	void reset();
 	void rename_label(std::string from, std::string to);
-
-	bool operator==(const asm_param& _param) const;
 };
 
 struct asm_instruction {
@@ -70,8 +65,6 @@ struct asm_instruction {
 
 	asm_instruction(std::string _instruction, std::string _param);
 	void rename_label(std::string from, std::string to);
-
-	bool operator==(const asm_instruction& _instruction) const;
 };
 
 struct asm_type {
@@ -95,8 +88,6 @@ struct asm_label {
 	std::string label;
 
 	asm_label(std::string _label);
-
-	bool operator==(const asm_label& _label) const;
 };
 
 struct asm_statement {
@@ -114,8 +105,6 @@ struct asm_statement {
 	asm_statement(const asm_statement& stmt);
 	~asm_statement();
 	void rename_label(std::string from, std::string to);
-
-	bool operator==(const asm_statement& _statement) const;
 };
 
 struct asm_function {
@@ -127,8 +116,6 @@ struct asm_function {
 	void add_statement(const asm_statement &stmt);
 
 	void normalize();
-
-	bool operator==(const asm_function &func) const;
 };
 
 struct asm_file {
