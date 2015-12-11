@@ -251,7 +251,7 @@ asm_statement::asm_statement(const std::string &line)
 {
 	string first, second;
 	const stmt_map *map;
-	int i = 0;
+	size_t i = 0;
 
 	vector<string> items = split_trim(" \t", line, 1);
 	if (items.size() == 0)

@@ -27,7 +27,7 @@ static size_t end_of_string(const string &line, size_t start)
 std::string trim(const std::string &line)
 {
 	static const char *spaces = " \n\t\r";
-	int pos1, pos2;
+	size_t pos1, pos2;
 
 	pos1 = line.find_first_not_of(spaces);
 	pos2 = line.find_last_not_of(spaces);

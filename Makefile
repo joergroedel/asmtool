@@ -1,5 +1,5 @@
 OBJ=$(patsubst %.cc, %.o, $(wildcard *.cc))
-CXXFLAGS=-O3 -g
+CXXFLAGS=-O3 -g -Wall
 TARGET=asmtool
 
 all: $(TARGET)
