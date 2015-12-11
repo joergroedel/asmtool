@@ -152,14 +152,14 @@ public:
 	bool operator==(const asm_function &func) const;
 };
 
-class asmfile {
+class asm_file {
 private:
 	std::vector<asm_statement>		statements;
 	std::vector<std::string>	functions;
 	std::vector<std::string>	objects;
 
 public:
-	asmfile();
+	asm_file();
 	void add_statement(const asm_statement &stmt);
 	void analyze();
 

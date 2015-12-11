@@ -507,17 +507,17 @@ bool asm_function::operator==(const asm_function &func) const
 	return true;
 }
 
-asmfile::asmfile()
+asm_file::asm_file()
 	: statements()
 {
 }
 
-void asmfile::add_statement(const asm_statement &stmt)
+void asm_file::add_statement(const asm_statement &stmt)
 {
 	statements.push_back(stmt);
 }
 
-void asmfile::analyze()
+void asm_file::analyze()
 {
 	asm_type *c_type;
 
@@ -555,7 +555,7 @@ void asmfile::analyze()
 #endif
 }
 
-asm_function *asmfile::get_function(string name)
+asm_function *asm_file::get_function(string name)
 {
 	bool in_text = false, old_text = false;
 	asm_function *func = 0;
@@ -615,7 +615,7 @@ asm_function *asmfile::get_function(string name)
 	return func;
 }
 
-bool asmfile::has_function(std::string name) const
+bool asm_file::has_function(std::string name) const
 {
 	for (vector<string>::const_iterator it = functions.begin();
 	     it != functions.end();
@@ -627,12 +627,12 @@ bool asmfile::has_function(std::string name) const
 	return false;
 }
 
-std::vector<std::string>::const_iterator asmfile::functions_begin() const
+std::vector<std::string>::const_iterator asm_file::functions_begin() const
 {
 	return functions.begin();
 }
 
-std::vector<std::string>::const_iterator asmfile::functions_end() const
+std::vector<std::string>::const_iterator asm_file::functions_end() const
 {
 	return functions.end();
 }

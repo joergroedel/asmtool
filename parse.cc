@@ -8,17 +8,17 @@
 
 using namespace std;
 
-asmfile *load_file(const char *name)
+asm_file *load_file(const char *name)
 {
 	ifstream in(name);
-	asmfile *asm_file;
+	asm_file *file;
 
 	if (!in.is_open()) {
 		cerr << "File not open: " << name << endl;
 		return 0;
 	}
 
-	asm_file = new asmfile();
+	file = new asm_file();
 
 	while (!in.eof()) {
 		string line;
@@ -35,17 +35,17 @@ asmfile *load_file(const char *name)
 		for (vector<string>::iterator it = lines.begin();
 		     it != lines.end();
 		     it++)
-			asm_file->add_statement(asm_statement(*it));
+			file->add_statement(asm_statement(*it));
 	}
 
-	asm_file->analyze();
+	file->analyze();
 
 	in.close();
 
-	return asm_file;
+	return file;
 }
 
-void changes(asmfile *file1, asmfile *file2)
+void changes(asm_file *file1, asm_file *file2)
 {
 	for (vector<string>::const_iterator it = file2->functions_begin();
 	     it != file2->functions_end();
@@ -69,7 +69,7 @@ void changes(asmfile *file1, asmfile *file2)
 
 int main(int argc, char **argv)
 {
-	asmfile *file1, *file2;
+	asm_file *file1, *file2;
 	if (argc != 3) {
 		cerr << "2 File parameters required" << endl;
 		return 1;
