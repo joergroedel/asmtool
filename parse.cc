@@ -160,13 +160,35 @@ bool compare_functions(asm_file *file1, asm_function *f1,
 	return ret;
 }
 
-void changes(asm_file *file1, asm_file *file2)
+static bool function_list(string type, const vector<string> &list, ostream &os)
 {
+	if (!list.size())
+		return false;
+
+	os << type << " functions:" << endl;
+
+	for (vector<string>::const_iterator it = list.begin();
+	     it != list.end();
+	     it++) {
+		os << "        " << *it << endl;
+	}
+
+	return true;
+}
+
+static void diff(asm_file *file1, asm_file *file2, ostream &os)
+{
+	vector<string> changed_functions;
+	vector<string> removed_functions;
+	vector<string> new_functions;
+	bool changes = false;
+
+	/* Search for new and changed functions */
 	for (vector<string>::const_iterator it = file2->functions.begin();
 	     it != file2->functions.end();
 	     it++) {
 		if (!file1->has_function(*it)) {
-			cout << "New function: " << *it << endl;
+			new_functions.push_back(*it);
 			continue;
 		}
 
@@ -174,12 +196,32 @@ void changes(asm_file *file1, asm_file *file2)
 		asm_function *func2 = file2->get_function(*it);
 
 		if (!compare_functions(file1, func1, file2, func2))
-			cout << "Changed function: " << *it << endl;
+			changed_functions.push_back(*it);
 
 		delete func1;
 		delete func2;
 		func1 = func2 = 0;
 	}
+
+	/* Look for removed functions */
+	for (vector<string>::const_iterator it = file1->functions.begin();
+	     it != file1->functions.end();
+	     it++) {
+		if (!file2->has_function(*it))
+			removed_functions.push_back(*it);
+	}
+
+	if (function_list("Removed", removed_functions, os))
+		changes = true;
+
+	if (function_list("New",     new_functions,     os))
+		changes = true;
+
+	if (function_list("Changed", changed_functions, os))
+		changes = true;
+
+	if (!changes)
+		os << "No changes found" << endl;
 }
 
 int main(int argc, char **argv)
@@ -193,7 +235,7 @@ int main(int argc, char **argv)
 	file1 = load_file(argv[1]);
 	file2 = load_file(argv[2]);
 
-	changes(file1, file2);
+	diff(file1, file2, cout);
 
 	return 0;
 }
