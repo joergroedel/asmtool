@@ -17,9 +17,9 @@ static vector<asm_param> parse_asm_params(string param)
 	size_t size, len = 0;
 	int depth = 0;
 	string token;
+	asm_param p;
 
 	while (true) {
-		asm_param p;
 
 		param = trim(param);
 		size  = param.size();
