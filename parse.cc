@@ -70,21 +70,23 @@ static bool compare_param(asm_file *file1, asm_param& param1,
 		asm_token &t1 = param1.tokens[i];
 		asm_token &t2 = param2.tokens[i];
 
-		if (t1.type != t2.type) {
-			ret = false;
-			continue;
-		}
+		if (t1.type != t2.type)
+			goto next_false;
 
 		if (t1.token == t2.token)
 			continue;
 
-		if (t1.type != asm_token::IDENTIFIER) {
-			ret = false;
-			continue;
-		}
+		if (t1.type != asm_token::IDENTIFIER)
+			goto next_false;
 
-		ret = generated_symbol(t1.token) &&
-		      generated_symbol(t2.token);
+		if (!generated_symbol(t1.token) ||
+		    !generated_symbol(t2.token))
+			goto next_false;
+
+		continue;
+
+	next_false:
+		ret = false;
 	}
 
 	return ret;
