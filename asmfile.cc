@@ -197,6 +197,16 @@ asm_label::asm_label(std::string _label)
 {
 }
 
+asm_size::asm_size(string param)
+{
+	vector<string> items = split_trim(",", param);
+
+	if (items.size() > 0)
+		symbol = items[0];
+	if (items.size() > 1)
+		size   = items[1];
+}
+
 const struct stmt_map {
 	const char *str;
 	stmt_type type;
@@ -301,6 +311,8 @@ asm_statement::asm_statement(const std::string &line)
 		obj_type = new asm_type(first);
 	else if (type == LABEL)
 		obj_label = new asm_label(first);
+	else if (type == SIZE)
+		obj_size = new asm_size(first);
 
 #if 0
 	cout << __stmt_name[type] << " ";
@@ -321,6 +333,8 @@ asm_statement::asm_statement(const asm_statement& stmt)
 		obj_type = new asm_type(*stmt.obj_type);
 	else if (type == LABEL && stmt.obj_label)
 		obj_label = new asm_label(*stmt.obj_label);
+	else if (type == SIZE && stmt.obj_size)
+		obj_size = new asm_size(*stmt.obj_size);
 }
 
 asm_statement::~asm_statement()
@@ -331,6 +345,8 @@ asm_statement::~asm_statement()
 		delete obj_type;
 	else if (type == LABEL && obj_label)
 		delete obj_label;
+	else if (type == SIZE && obj_size)
+		delete obj_size;
 }
 
 void asm_statement::rename_label(std::string from, std::string to)

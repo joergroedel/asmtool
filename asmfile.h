@@ -98,6 +98,14 @@ struct asm_label {
 	asm_label(std::string _label);
 };
 
+struct asm_size {
+
+	std::string symbol;
+	std::string size;
+
+	asm_size(std::string param);
+};
+
 struct asm_statement {
 
 	stmt_type type;
@@ -107,6 +115,7 @@ struct asm_statement {
 		asm_instruction	*obj_instruction;
 		asm_type	*obj_type;
 		asm_label	*obj_label;
+		asm_size	*obj_size;
 	};
 
 	asm_statement(const std::string &line);
