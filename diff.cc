@@ -173,6 +173,40 @@ static bool function_list(string type, const vector<string> &list, ostream &os)
 	return true;
 }
 
+static bool compare_symbol_map(asm_file *file1, asm_file *file2,
+			       map<string, string> &symbol_map)
+{
+	bool changed = false;
+
+	for (map<string, string>::iterator symbol = symbol_map.begin();
+			symbol != symbol_map.end();
+			++symbol) {
+		string sym_old(symbol->second), sym_new(symbol->first);
+
+		if (!generated_symbol(sym_old) &&
+		    !generated_symbol(sym_new))
+			continue;
+
+		if (!file1->has_function(sym_old) ||
+		    !file2->has_function(sym_new))
+			continue;
+
+		asm_function *func_old = file1->get_function(sym_old);
+		asm_function *func_new = file2->get_function(sym_new);
+		map<string, string> func_symbol_map;
+
+		// TODO: Don't compare local and global symbols
+		changed = !compare_functions(file1, func_old,
+					     file2, func_new,
+					     func_symbol_map);
+
+		delete func_old;
+		delete func_new;
+	}
+
+	return changed;
+}
+
 void diff(asm_file *file1, asm_file *file2, ostream &os)
 {
 	vector<string> changed_functions;
@@ -184,6 +218,8 @@ void diff(asm_file *file1, asm_file *file2, ostream &os)
 	for (vector<string>::const_iterator it = file2->functions.begin();
 	     it != file2->functions.end();
 	     it++) {
+		bool changed;
+
 		if (generated_symbol(*it))
 			continue;
 
@@ -197,7 +233,12 @@ void diff(asm_file *file1, asm_file *file2, ostream &os)
 
 		map<string, string> symbol_map;
 
-		if (!compare_functions(file1, func1, file2, func2, symbol_map))
+		changed = !compare_functions(file1, func1, file2, func2, symbol_map);
+
+		if (!changed)
+			changed = compare_symbol_map(file1, file2, symbol_map);
+
+		if (changed)
 			changed_functions.push_back(*it);
 
 #if 0
