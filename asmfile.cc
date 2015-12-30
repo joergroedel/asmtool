@@ -397,7 +397,6 @@ void asm_function::add_statement(const asm_statement& stmt)
 void asm_function::normalize()
 {
 	map<string, string> symbols;
-	ostringstream is;
 	int counter = 0;
 
 	/* Create replacements for function-local labels */
@@ -405,6 +404,7 @@ void asm_function::normalize()
 	     it != statements.end();
 	     it++)
 	{
+		ostringstream is;
 		asm_label *label;
 
 		if (it->type != LABEL)
@@ -414,7 +414,6 @@ void asm_function::normalize()
 		label = it->obj_label;
 
 		symbols[label->label] = is.str();
-		is.clear();
 		counter += 1;
 	}
 
