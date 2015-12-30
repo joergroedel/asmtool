@@ -410,7 +410,7 @@ void asm_function::normalize()
 		if (it->type != LABEL)
 			continue;
 
-		is << ".ADL" << counter;
+		is << "~ASMTOOL" << counter;
 		label = it->obj_label;
 
 		symbols[label->label] = is.str();
