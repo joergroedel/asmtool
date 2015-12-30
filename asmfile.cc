@@ -499,9 +499,10 @@ asm_function *asm_file::get_function(string name)
 		if (type == INSTRUCTION || type == LABEL)
 			func->add_statement(*it);
 
-		/* HACK: use better check for eofunc */
-		if (type == SIZE)
-			break;
+		if (type == SIZE && it->obj_size) {
+			if (it->obj_size->symbol == name)
+				break;
+		}
 
 	}
 
