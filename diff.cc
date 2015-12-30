@@ -118,6 +118,22 @@ bool compare_functions(asm_file *file1, asm_function *f1,
 				continue;
 			}
 		}
+
+		if (s1.type != LABEL && s1.type != INSTRUCTION) {
+			unsigned int i;
+
+			if (s1.params.size() != s2.params.size()) {
+				ret = false;
+				continue;
+			}
+
+			for (i = 0; i < s1.params.size(); i++) {
+				if (s1.params[i] != s2.params[i]) {
+					ret = false;
+					break;
+				}
+			}
+		}
 	}
 
 	return ret;
