@@ -140,6 +140,7 @@ struct asm_function {
 
 	std::string name;
 	std::vector<asm_statement> statements;
+	asm_section section;
 
 	asm_function(const std::string& name);
 	void add_statement(const asm_statement &stmt);

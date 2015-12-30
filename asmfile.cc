@@ -516,6 +516,7 @@ asm_function *asm_file::get_function(string name)
 				continue;
 
 			func = new asm_function(name);
+			func->section = section;
 
 			continue;
 		}
