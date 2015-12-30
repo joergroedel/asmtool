@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <stack>
 #include <map>
 
 #include "asmfile.h"
@@ -219,6 +220,11 @@ asm_section::asm_section(string param)
 		params = items[2];
 
 	executable = (flags.find_first_of("x") != string::npos);
+}
+
+asm_section::asm_section()
+	: name(".text"), flags(), params(), executable(true)
+{
 }
 
 
@@ -473,30 +479,32 @@ void asm_file::analyze()
 
 asm_function *asm_file::get_function(string name)
 {
-	bool in_text = false, old_text = false;
+	stack<asm_section> stack;
 	asm_function *func = 0;
-	int depth = 0;
+	asm_section section;
 
 	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
 		stmt_type type = it->type;
+		asm_section text, data(".data,\"rw\"");
 
 		/* Section tracking */
 		if (type == TEXT) {
-			in_text = true;
-			depth   = 0;
+			section = text;
 		} else if (type == DATA) {
-			in_text = false;
+			section = data;
 		} else if (type == PUSHSECTION) {
-			depth += 1;
-			old_text = in_text;
+			stack.push(section);
 		} else if (type == POPSECTION) {
-			depth -= 1;
-			if (depth == 0)
-				in_text = old_text;
+			if (!stack.empty()) {
+				section = stack.top();
+				stack.pop();
+			} else {
+				cout << "WARNING: .popsection on empty stack" << endl;
+			}
 		} else if (type == SECTION) {
-			in_text = false;
+			section = *(it->obj_section);
 		}
 
 		/* Search for the function */
@@ -514,7 +522,7 @@ asm_function *asm_file::get_function(string name)
 
 		/* We found the function */
 
-		if (!in_text)
+		if (!section.executable)
 			continue;
 
 		if (type == INSTRUCTION || type == LABEL)

@@ -113,6 +113,7 @@ struct asm_section {
 	std::string params;
 	bool executable;
 
+	asm_section();
 	asm_section(std::string param);
 };
 
