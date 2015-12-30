@@ -106,6 +106,16 @@ struct asm_size {
 	asm_size(std::string param);
 };
 
+struct asm_section {
+
+	std::string name;
+	std::string flags;
+	std::string params;
+	bool executable;
+
+	asm_section(std::string param);
+};
+
 struct asm_statement {
 
 	stmt_type type;
@@ -116,6 +126,7 @@ struct asm_statement {
 		asm_type	*obj_type;
 		asm_label	*obj_label;
 		asm_size	*obj_size;
+		asm_section	*obj_section;
 	};
 
 	asm_statement(const std::string &line);
