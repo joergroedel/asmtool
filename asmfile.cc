@@ -260,7 +260,6 @@ const struct stmt_map {
 const char *__stmt_name[] = {
 	[NOSTMT]	= "NO STATEMENT",
 	[DOTFILE]	= "FILE",
-	[STRING]	= "STRING",
 	[INSTRUCTION]	= "INSTRUCTION",
 	[SECTION]	= "SECTION",
 	[TEXT]		= "TEXT",
@@ -269,6 +268,7 @@ const char *__stmt_name[] = {
 	[TYPE]		= "TYPE",
 	[GLOBAL]	= "GLOBAL",
 	[LOCAL]		= "LOCAL",
+	[STRING]	= "STRING",
 	[BYTE]		= "BYTE",
 	[WORD]		= "WORD",
 	[LONG]		= "LONG",
@@ -428,6 +428,16 @@ void asm_function::normalize()
 	}
 }
 
+asm_object::asm_object(const string& _name)
+	: name(_name), size(0), scope(ADHOC)
+{
+}
+
+void asm_object::add_statement(const asm_statement& stmt)
+{
+	statements.push_back(stmt);
+}
+
 asm_file::asm_file()
 	: statements()
 {
@@ -536,6 +546,117 @@ asm_function *asm_file::get_function(string name)
 	return func;
 }
 
+asm_object *asm_file::get_object(string name)
+{
+	stack<asm_section> stack;
+	asm_object *obj = 0;
+	asm_section section;
+	bool found = false;
+
+	obj = new asm_object(name);
+
+	// Search the object type
+	for (vector<asm_statement>::iterator it = statements.begin();
+	     it != statements.end();
+	     it++) {
+		if (it->type != LOCAL && it->type != GLOBAL)
+			continue;
+
+		if ((it->params.size() < 1) || (it->params[0] != name))
+			continue;
+
+		if (it->type == LOCAL)
+			obj->scope = asm_object::LOCAL;
+		else
+			obj->scope = asm_object::GLOBAL;
+
+		break;
+	}
+
+	// Search the object size
+	for (vector<asm_statement>::iterator it = statements.begin();
+	     it != statements.end();
+	     it++) {
+		if (it->type != SIZE)
+			continue;
+
+		if (it->obj_size->symbol != name)
+			continue;
+
+		istringstream is(it->obj_size->size);
+		size_t in;
+
+		is >> in;
+
+		if (!is.fail())
+			obj->size = in;
+
+		break;
+	}
+
+	// Now search the object
+	for (vector<asm_statement>::iterator it = statements.begin();
+	     it != statements.end();
+	     it++) {
+		asm_section text, data(".data,\"rw\"");
+		stmt_type type = it->type;
+
+		/* Section tracking */
+		if (type == TEXT) {
+			section = text;
+		} else if (type == DATA) {
+			section = data;
+		} else if (type == PUSHSECTION) {
+			stack.push(section);
+		} else if (type == POPSECTION) {
+			if (!stack.empty()) {
+				section = stack.top();
+				stack.pop();
+			} else {
+				cout << "WARNING: .popsection on empty stack" << endl;
+			}
+		} else if (type == SECTION) {
+			section = *(it->obj_section);
+		}
+
+		/* Search for the object */
+		if (!found) {
+			if (type == COMM) {
+				if ((it->params.size() < 1) ||
+				    (it->params[0] != name))
+					continue;
+
+				obj->add_statement(*it);
+				found = true;
+
+				break;
+			}
+
+			if (type != LABEL)
+				continue;
+
+			if (it->obj_label->label != name)
+				continue;
+
+			obj->section = section;
+			found = true;
+
+			continue;
+		}
+
+		/* We found the object */
+		if (type < STRING && type > ZERO)
+			break;
+
+		obj->add_statement(*it);
+	}
+
+	if (!found)
+		obj->scope = asm_object::EXTERNAL;
+
+	return obj;
+}
+
 bool asm_file::has_function(std::string name) const
 {
 	for (vector<string>::const_iterator it = functions.begin();
@@ -548,3 +669,14 @@ bool asm_file::has_function(std::string name) const
 	return false;
 }
 
+bool asm_file::has_object(std::string name) const
+{
+	for (vector<string>::const_iterator it = objects.begin();
+	     it != objects.end();
+	     it++) {
+		if (name == *it)
+			return true;
+	}
+
+	return false;
+}

@@ -15,7 +15,6 @@
 enum stmt_type {
 	NOSTMT = 0,
 	DOTFILE,
-	STRING,
 	INSTRUCTION,
 	SECTION,
 	TEXT,
@@ -24,6 +23,7 @@ enum stmt_type {
 	TYPE,
 	GLOBAL,
 	LOCAL,
+	STRING,
 	BYTE,
 	WORD,
 	LONG,
@@ -148,6 +148,26 @@ struct asm_function {
 	void normalize();
 };
 
+struct asm_object {
+
+	enum object_scope {
+		ADHOC,
+		LOCAL,
+		GLOBAL,
+		EXTERNAL,
+	};
+
+	std::string name;
+	size_t size;
+	object_scope scope;
+	asm_section section;
+
+	std::vector<asm_statement> statements;
+
+	asm_object(const std::string& name);
+	void add_statement(const asm_statement &stmt);
+};
+
 struct asm_file {
 
 	std::vector<asm_statement>	statements;
@@ -159,7 +179,10 @@ struct asm_file {
 	void analyze();
 
 	asm_function *get_function(std::string name);
+	asm_object   *get_object(std::string name);
+
 	bool has_function(std::string name) const;
+	bool has_object(std::string name) const;
 };
 
 #endif
