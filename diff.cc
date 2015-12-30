@@ -18,7 +18,8 @@
 using namespace std;
 
 static bool compare_param(asm_file *file1, asm_param& param1,
-			  asm_file *file2, asm_param &param2)
+			  asm_file *file2, asm_param &param2,
+			  map<string, string> &symbol_map)
 {
 	size_t size1, size2;
 	bool ret = true;
@@ -35,6 +36,18 @@ static bool compare_param(asm_file *file1, asm_param& param1,
 
 		if (t1.type != t2.type)
 			goto next_false;
+
+		if (t1.type == asm_token::IDENTIFIER) {
+			if (symbol_map.find(t2.token) != symbol_map.end()) {
+				if (symbol_map[t2.token] != t1.token) {
+					cout << "WARNING: " << t2.token;
+					cout << " maps to " << symbol_map[t2.token];
+					cout << " and " << t1.token << endl;
+				}
+			} else {
+				symbol_map[t2.token] = t1.token;
+			}
+		}
 
 		if (t1.token == t2.token)
 			continue;
@@ -56,7 +69,8 @@ static bool compare_param(asm_file *file1, asm_param& param1,
 }
 
 static bool compare_instructions(asm_file *file1, asm_instruction *ins1,
-				 asm_file *file2, asm_instruction *ins2)
+				 asm_file *file2, asm_instruction *ins2,
+				 map<string, string> &symbol_map)
 {
 	size_t size1, size2;
 	int ret = true;
@@ -73,7 +87,8 @@ static bool compare_instructions(asm_file *file1, asm_instruction *ins1,
 	/* Compare parameters */
 	for (size_t i = 0; i < size1; ++i) {
 		if (!compare_param(file1, ins1->params[i],
-				   file2, ins2->params[i]))
+				   file2, ins2->params[i],
+				   symbol_map))
 			ret = false;
 	}
 
@@ -81,7 +96,8 @@ static bool compare_instructions(asm_file *file1, asm_instruction *ins1,
 }
 
 bool compare_functions(asm_file *file1, asm_function *f1,
-		       asm_file *file2, asm_function *f2)
+		       asm_file *file2, asm_function *f2,
+		       map<string, string> &symbol_map)
 {
 	size_t size1 = f1->statements.size();
 	size_t size2 = f2->statements.size();
@@ -113,7 +129,8 @@ bool compare_functions(asm_file *file1, asm_function *f1,
 
 		if (s1.type == INSTRUCTION) {
 			if (!compare_instructions(file1, s1.obj_instruction,
-						  file2, s2.obj_instruction)) {
+						  file2, s2.obj_instruction,
+						  symbol_map)) {
 				ret = false;
 				continue;
 			}
@@ -135,6 +152,7 @@ bool compare_functions(asm_file *file1, asm_function *f1,
 			}
 		}
 	}
+
 
 	return ret;
 }
@@ -177,8 +195,22 @@ void diff(asm_file *file1, asm_file *file2, ostream &os)
 		asm_function *func1 = file1->get_function(*it);
 		asm_function *func2 = file2->get_function(*it);
 
-		if (!compare_functions(file1, func1, file2, func2))
+		map<string, string> symbol_map;
+
+		if (!compare_functions(file1, func1, file2, func2, symbol_map))
 			changed_functions.push_back(*it);
+
+#if 0
+		cout << "Compared Function " << *it << endl;
+		if (!symbol_map.empty()) {
+			cout << "  Symbol map:" << endl;
+			for (map<string, string>::iterator sym = symbol_map.begin();
+					sym != symbol_map.end();
+					++sym) {
+				cout << "    " << sym->first << " = " << sym->second << endl;
+			}
+		}
+#endif
 
 		delete func1;
 		delete func2;
