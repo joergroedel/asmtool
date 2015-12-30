@@ -523,11 +523,7 @@ asm_function *asm_file::get_function(string name)
 
 		/* We found the function */
 
-		if (!section.executable)
-			continue;
-
-		if (type == INSTRUCTION || type == LABEL)
-			func->add_statement(*it);
+		func->add_statement(*it);
 
 		if (type == SIZE && it->obj_size) {
 			if (it->obj_size->symbol == name)
