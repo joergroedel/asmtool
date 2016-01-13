@@ -356,7 +356,8 @@ asm_statement::asm_statement(const std::string &line)
 asm_statement::asm_statement(const asm_statement& stmt)
 	: obj_instruction(0)
 {
-	type = stmt.type;
+	type   = stmt.type;
+	params = stmt.params;
 
 	if (type == INSTRUCTION && stmt.obj_instruction)
 		obj_instruction = new asm_instruction(*stmt.obj_instruction);
