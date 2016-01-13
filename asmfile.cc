@@ -227,6 +227,27 @@ asm_section::asm_section()
 {
 }
 
+asm_comm::asm_comm(std::string param)
+{
+	vector<string> items;
+
+	items = split_trim(",", param, 2);
+
+	if (items.size() > 0)
+		symbol = items[0];
+
+	if (items.size() > 1) {
+		istringstream is(items[1]);
+
+		is >> size;
+	}
+
+	if (items.size() > 2) {
+		istringstream is(items[2]);
+
+		is >> alignment;
+	}
+}
 
 const struct stmt_map {
 	const char *str;
@@ -344,6 +365,8 @@ asm_statement::asm_statement(const std::string &line)
 		obj_size = new asm_size(first);
 	else if (type == SECTION)
 		obj_section = new asm_section(first);
+	else if (type == COMM)
+		obj_comm = new asm_comm(first);
 
 #if 0
 	cout << __stmt_name[type] << " ";
@@ -369,6 +392,8 @@ asm_statement::asm_statement(const asm_statement& stmt)
 		obj_size = new asm_size(*stmt.obj_size);
 	else if (type == SECTION && stmt.obj_section)
 		obj_section = new asm_section(*stmt.obj_section);
+	else if (type == COMM && stmt.obj_comm)
+		obj_comm = new asm_comm(*stmt.obj_comm);
 }
 
 asm_statement::~asm_statement()
@@ -383,6 +408,9 @@ asm_statement::~asm_statement()
 		delete obj_size;
 	else if (type == SECTION && obj_section)
 		delete obj_section;
+	else if (type == COMM && obj_comm)
+		delete obj_comm;
+
 }
 
 void asm_statement::rename_label(std::string from, std::string to)

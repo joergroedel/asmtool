@@ -122,6 +122,14 @@ struct asm_section {
 	asm_section(std::string param);
 };
 
+struct asm_comm {
+	std::string symbol;
+	size_t size;
+	size_t alignment;
+
+	asm_comm(std::string param);
+};
+
 struct asm_statement {
 
 	stmt_type type;
@@ -133,6 +141,7 @@ struct asm_statement {
 		asm_label	*obj_label;
 		asm_size	*obj_size;
 		asm_section	*obj_section;
+		asm_comm	*obj_comm;
 	};
 
 	asm_statement(const std::string &line);
