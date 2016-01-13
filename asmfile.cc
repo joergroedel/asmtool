@@ -457,9 +457,36 @@ void asm_file::add_statement(const asm_statement &stmt)
 	statements.push_back(stmt);
 }
 
+const char *scope_name(asm_object::object_scope scope)
+{
+	switch (scope) {
+	case asm_object::ADHOC:
+		return "ADHOC";
+	case asm_object::LOCAL:
+		return "LOCAL";
+	case asm_object::GLOBAL:
+		return "GLOBAL";
+	case asm_object::EXTERNAL:
+		return "EXTERNAL";
+	default:
+		return "UNKNOWN";
+	}
+}
+
 void asm_file::analyze()
 {
 	asm_type *obj_type;
+
+#if 0
+	for (vector<asm_statement>::iterator it = statements.begin();
+	     it != statements.end();
+	     it++) {
+		cout << __stmt_name[it->type] << " ";
+		for (vector<string>::iterator i = it->params.begin(); i != it->params.end(); i++)
+			cout << '[' << *i << "] ";
+		cout << endl;
+	}
+#endif
 
 	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
@@ -479,19 +506,28 @@ void asm_file::analyze()
 
 	sort(functions.begin(), functions.end());
 
+	load_object_scopes();
+	load_object_sizes();
+
+	for (map<string, asm_object>::iterator it = objects.begin();
+	     it != objects.end();
+	     ++it)
+		load_object(it->first);
 
 #if 0
-	cout << "Functions:" << endl;
+	cout << "Functions (" << functions.size() << "):" << endl;
 	for (vector<string>::iterator it = functions.begin();
 	     it != functions.end();
 	     it++)
 		cout << "    " << *it << endl;
 
-	cout << "Objects:" << endl;
+	cout << "Objects (" << objects.size() << "):" << endl;
 	for (map<string, asm_object>::iterator it = objects.begin();
 	     it != objects.end();
-	     it++)
-		cout << "    " << it->first << endl;
+	     it++) {
+		cout << "    " << it->first << " size=" << it->second.size;
+		cout << " scope=" << scope_name(it->second.scope) << endl;
+	}
 #endif
 }
 
@@ -555,53 +591,72 @@ asm_function *asm_file::get_function(string name)
 	return func;
 }
 
-asm_object *asm_file::get_object(string name)
+void asm_file::load_object_scopes()
 {
-	stack<asm_section> stack;
-	asm_object *obj = 0;
-	asm_section section;
-	bool found = false;
-
-	// Search the object type
+	int i = 0;
 	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
 		if (it->type != LOCAL && it->type != GLOBAL)
 			continue;
 
-		if ((it->params.size() < 1) || (it->params[0] != name))
+		if (it->params.size() < 1)
 			continue;
+
+		string name = it->params[0];
+
+		if (has_function(name))
+			continue;
+
+#if 0
+		cout << __func__ << " " << ++i << endl;
+		cout << __func__ << " " << name << " " << it->type << " " << it->params.size() << endl;
+#endif
 
 		if (it->type == LOCAL)
 			objects[name].scope = asm_object::LOCAL;
 		else
 			objects[name].scope = asm_object::GLOBAL;
-
-		break;
 	}
+}
 
-	// Search the object size
+void asm_file::load_object_sizes()
+{
 	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
 		if (it->type != SIZE)
 			continue;
 
-		if (it->obj_size->symbol != name)
+		string name = it->obj_size->symbol;
+
+		if (!has_object(name))
 			continue;
+
+#if 0
+		cout << __func__ << " : " << name << endl;
+		cout << "Loading size for " << it->obj_size->symbol << endl;
+#endif
 
 		istringstream is(it->obj_size->size);
 		size_t in;
+
+		if (has_function(name))
+			continue;
 
 		is >> in;
 
 		if (!is.fail())
 			objects[name].size = in;
-
-		break;
 	}
+}
 
-	// Now search the object
+void asm_file::load_object(string name)
+{
+	stack<asm_section> stack;
+	asm_section section;
+	bool found = false;
+
 	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
@@ -645,7 +700,7 @@ asm_object *asm_file::get_object(string name)
 			if (it->obj_label->label != name)
 				continue;
 
-			obj->section = section;
+			objects[name].section = section;
 			found = true;
 
 			continue;
@@ -658,10 +713,6 @@ asm_object *asm_file::get_object(string name)
 		objects[name].add_statement(*it);
 	}
 
-	if (!found)
-		objects[name].scope = asm_object::EXTERNAL;
-
-	return &objects[name];
 }
 
 bool asm_file::has_function(std::string name) const
@@ -674,6 +725,16 @@ bool asm_file::has_function(std::string name) const
 	}
 
 	return false;
+}
+
+asm_object *asm_file::get_object(string name)
+{
+	map<string, asm_object>::iterator obj = objects.find(name);
+
+	if (obj == objects.end())
+		return NULL;
+
+	return &objects[name];
 }
 
 bool asm_file::has_object(std::string name) const
