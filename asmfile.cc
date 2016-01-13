@@ -436,8 +436,8 @@ void asm_function::normalize()
 	}
 }
 
-asm_object::asm_object(const string& _name)
-	: name(_name), size(0), scope(ADHOC)
+asm_object::asm_object()
+	: size(0), scope(ADHOC)
 {
 }
 
@@ -471,13 +471,13 @@ void asm_file::analyze()
 		if (obj_type->type == asm_type::FUNCTION)
 			functions.push_back(obj_type->symbol);
 		else if (obj_type->type == asm_type::OBJECT)
-			objects.push_back(obj_type->symbol);
+			objects[obj_type->symbol] = asm_object();
 		else
 			cerr << "Unknown type " << obj_type->symbol << endl;
 	}
 
 	sort(functions.begin(), functions.end());
-	sort(objects.begin(),   objects.end());
+
 
 #if 0
 	cout << "Functions:" << endl;
@@ -487,10 +487,10 @@ void asm_file::analyze()
 		cout << "    " << *it << endl;
 
 	cout << "Objects:" << endl;
-	for (vector<string>::iterator it = objects.begin();
+	for (map<string, asm_object>::iterator it = objects.begin();
 	     it != objects.end();
 	     it++)
-		cout << "    " << *it << endl;
+		cout << "    " << it->first << endl;
 #endif
 }
 
@@ -561,8 +561,6 @@ asm_object *asm_file::get_object(string name)
 	asm_section section;
 	bool found = false;
 
-	obj = new asm_object(name);
-
 	// Search the object type
 	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
@@ -574,9 +572,9 @@ asm_object *asm_file::get_object(string name)
 			continue;
 
 		if (it->type == LOCAL)
-			obj->scope = asm_object::LOCAL;
+			objects[name].scope = asm_object::LOCAL;
 		else
-			obj->scope = asm_object::GLOBAL;
+			objects[name].scope = asm_object::GLOBAL;
 
 		break;
 	}
@@ -597,7 +595,7 @@ asm_object *asm_file::get_object(string name)
 		is >> in;
 
 		if (!is.fail())
-			obj->size = in;
+			objects[name].size = in;
 
 		break;
 	}
@@ -634,7 +632,7 @@ asm_object *asm_file::get_object(string name)
 				    (it->params[0] != name))
 					continue;
 
-				obj->add_statement(*it);
+				objects[name].add_statement(*it);
 				found = true;
 
 				break;
@@ -656,13 +654,13 @@ asm_object *asm_file::get_object(string name)
 		if (type < STRING && type > ZERO)
 			break;
 
-		obj->add_statement(*it);
+		objects[name].add_statement(*it);
 	}
 
 	if (!found)
-		obj->scope = asm_object::EXTERNAL;
+		objects[name].scope = asm_object::EXTERNAL;
 
-	return obj;
+	return &objects[name];
 }
 
 bool asm_file::has_function(std::string name) const
@@ -679,12 +677,5 @@ bool asm_file::has_function(std::string name) const
 
 bool asm_file::has_object(std::string name) const
 {
-	for (vector<string>::const_iterator it = objects.begin();
-	     it != objects.end();
-	     it++) {
-		if (name == *it)
-			return true;
-	}
-
-	return false;
+	return (objects.find(name) != objects.end());
 }

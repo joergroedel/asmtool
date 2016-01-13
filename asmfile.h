@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 enum stmt_type {
 	NOSTMT = 0,
@@ -161,22 +162,21 @@ struct asm_object {
 		EXTERNAL,
 	};
 
-	std::string name;
 	size_t size;
 	object_scope scope;
 	asm_section section;
 
 	std::vector<asm_statement> statements;
 
-	asm_object(const std::string& name);
+	asm_object();
 	void add_statement(const asm_statement &stmt);
 };
 
 struct asm_file {
 
-	std::vector<asm_statement>	statements;
-	std::vector<std::string>	functions;
-	std::vector<std::string>	objects;
+	std::vector<asm_statement>		statements;
+	std::vector<std::string>		functions;
+	std::map<std::string, asm_object>	objects;
 
 	asm_file();
 	void add_statement(const asm_statement &stmt);
