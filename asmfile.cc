@@ -519,6 +519,11 @@ void asm_file::analyze()
 	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
+		if (it->type == COMM) {
+			objects[it->obj_comm->symbol] = asm_object();
+			objects[it->obj_comm->symbol].size = it->obj_comm->size;
+		}
+
 		if (it->type != TYPE)
 			continue;
 
