@@ -85,6 +85,9 @@ static int command_diff(int argc, char **argv)
 		return 1;
 	}
 
+	if (verbose)
+		cout << "Running in verbose mode" << endl;
+
 	file1 = load_file(argv[0]);
 	file2 = load_file(argv[1]);
 
