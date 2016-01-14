@@ -98,20 +98,6 @@ vector<string> split_trim(const char *delim, string line, unsigned splits)
 		}
 	}
 
-#if 0
-	while (pos != std::string::npos) {
-		pos = line.find_first_of(delim);
-		if (pos != std::string::npos) {
-			item = line.substr(0, pos);
-			line = line.substr(pos+1);
-		} else {
-			item = line;
-		}
-
-		items.push_back(trim(item));
-	}
-#endif
-
 	return items;
 }
 

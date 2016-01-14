@@ -367,13 +367,6 @@ asm_statement::asm_statement(const std::string &line)
 		obj_section = new asm_section(first);
 	else if (type == COMM)
 		obj_comm = new asm_comm(first);
-
-#if 0
-	cout << __stmt_name[type] << " ";
-	for (vector<string>::iterator it =  params.begin(); it != params.end(); it++)
-		cout << '[' << *it << "] ";
-	cout << endl;
-#endif
 }
 
 asm_statement::asm_statement(const asm_statement& stmt)
@@ -632,11 +625,6 @@ void asm_file::load_object_sizes()
 
 		if (!has_object(name))
 			continue;
-
-#if 0
-		cout << __func__ << " : " << name << endl;
-		cout << "Loading size for " << it->obj_size->symbol << endl;
-#endif
 
 		istringstream is(it->obj_size->size);
 		size_t in;
