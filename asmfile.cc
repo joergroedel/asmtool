@@ -626,7 +626,6 @@ asm_function *asm_file::get_function(string name)
 
 void asm_file::load_object_scopes()
 {
-	int i = 0;
 	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
@@ -640,11 +639,6 @@ void asm_file::load_object_scopes()
 
 		if (has_function(name))
 			continue;
-
-#if 0
-		cout << __func__ << " " << ++i << endl;
-		cout << __func__ << " " << name << " " << it->type << " " << it->params.size() << endl;
-#endif
 
 		if (it->type == LOCAL)
 			objects[name].scope = asm_object::LOCAL;
