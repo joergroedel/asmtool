@@ -505,17 +505,6 @@ void asm_file::analyze()
 {
 	asm_type *obj_type;
 
-#if 0
-	for (vector<asm_statement>::iterator it = statements.begin();
-	     it != statements.end();
-	     it++) {
-		cout << __stmt_name[it->type] << " ";
-		for (vector<string>::iterator i = it->params.begin(); i != it->params.end(); i++)
-			cout << '[' << *i << "] ";
-		cout << endl;
-	}
-#endif
-
 	for (vector<asm_statement>::iterator it = statements.begin();
 	     it != statements.end();
 	     it++) {
@@ -546,22 +535,6 @@ void asm_file::analyze()
 	     it != objects.end();
 	     ++it)
 		load_object(it->first);
-
-#if 0
-	cout << "Functions (" << functions.size() << "):" << endl;
-	for (vector<string>::iterator it = functions.begin();
-	     it != functions.end();
-	     it++)
-		cout << "    " << *it << endl;
-
-	cout << "Objects (" << objects.size() << "):" << endl;
-	for (map<string, asm_object>::iterator it = objects.begin();
-	     it != objects.end();
-	     it++) {
-		cout << "    " << it->first << " size=" << it->second.size;
-		cout << " scope=" << scope_name(it->second.scope) << endl;
-	}
-#endif
 }
 
 asm_function *asm_file::get_function(string name)
@@ -767,4 +740,38 @@ asm_object *asm_file::get_object(string name)
 bool asm_file::has_object(std::string name) const
 {
 	return (objects.find(name) != objects.end());
+}
+
+void asm_file::dump_statements() const
+{
+	for (vector<asm_statement>::const_iterator it = statements.begin();
+	     it != statements.end();
+	     ++it) {
+		cout << __stmt_name[it->type] << " ";
+		for (vector<string>::const_iterator i = it->params.begin();
+		     i != it->params.end();
+		     ++i)
+			cout << '[' << *i << "] ";
+		cout << endl;
+	}
+}
+
+void asm_file::dump_functions() const
+{
+	cout << "Functions (" << functions.size() << "):" << endl;
+	for (vector<string>::const_iterator it = functions.begin();
+	     it != functions.end();
+	     ++it)
+		cout << "    " << *it << endl;
+}
+
+void asm_file::dump_objects() const
+{
+	cout << "Objects (" << objects.size() << "):" << endl;
+	for (map<string, asm_object>::const_iterator it = objects.begin();
+	     it != objects.end();
+	     ++it) {
+		cout << "    " << it->first << " size=" << it->second.size;
+		cout << " scope=" << scope_name(it->second.scope) << endl;
+	}
 }

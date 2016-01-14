@@ -200,6 +200,10 @@ struct asm_file {
 
 	bool has_function(std::string name) const;
 	bool has_object(std::string name) const;
+
+	void dump_statements()	const;
+	void dump_functions()	const;
+	void dump_objects()	const;
 };
 
 #endif
