@@ -671,7 +671,7 @@ asm_object *asm_file::get_object(string name)
 	if (obj == objects.end())
 		return NULL;
 
-	return &objects[name];
+	return new asm_object(obj->second);
 }
 
 bool asm_file::has_object(std::string name) const
