@@ -195,8 +195,7 @@ struct asm_file {
 
 	void load_object_scopes();
 	void load_object_sizes();
-	void load_object(std::string name);
-	void load_functions();
+	void load_objects();
 
 	bool has_function(std::string name) const;
 	bool has_object(std::string name) const;

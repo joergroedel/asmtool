@@ -511,20 +511,16 @@ void asm_file::analyze()
 {
 	load_object_scopes();
 	load_object_sizes();
-
-	for (map<string, asm_object>::iterator it = objects.begin();
-	     it != objects.end();
-	     ++it)
-		load_object(it->first);
-
-	load_functions();
+	load_objects();
 }
 
-void asm_file::load_functions()
+void asm_file::load_objects()
 {
-	map<string, asm_function>::iterator current = functions.end();
+	map<string, asm_function>::iterator cur_fn  = functions.end();
+	map<string, asm_object>::iterator   cur_obj = objects.end();
 	stack<asm_section> stack;
 	asm_function *func = 0;
+	asm_object *obj = 0;
 	asm_section section;
 
 	for (vector<asm_statement>::iterator it = statements.begin();
@@ -551,26 +547,57 @@ void asm_file::load_functions()
 			section = *(it->obj_section);
 		}
 
-		if (type == LABEL) {
-			map<string, asm_function>::iterator l = functions.find(it->obj_label->label);
-			if (l == functions.end())
-				continue;
-			current = l;
-			func = &current->second;
-			func->section = section;
+		if (type == COMM) {
+			string name = it->obj_comm->symbol;
+
+			if (name.size() > 0)
+				objects[name].add_statement(*it);
+
 			continue;
 		}
 
-		if (current != functions.end()) {
+		if (type == LABEL) {
+			map<string, asm_function>::iterator f = functions.find(it->obj_label->label);
+			map<string, asm_object>::iterator   o = objects.find(it->obj_label->label);
+
+			if (f != functions.end()) {
+				cur_obj       = objects.end();
+				obj           = 0;
+				cur_fn        = f;
+				func          = &cur_fn->second;
+				func->section = section;
+			} else if (o != objects.end()) {
+				cur_fn       = functions.end();
+				func         = 0;
+				cur_obj      = o;
+				obj          = &cur_obj->second;
+				obj->section = section;
+			}
+
+			continue;
+		}
+
+		if (func) {
 
 			/* We are in the middle of a function */
 			if (type == SIZE && it->obj_size &&
-			    it->obj_size->symbol == current->first) {
-				current = functions.end();
+			    it->obj_size->symbol == cur_fn->first) {
+				cur_fn = functions.end();
+				func   = 0;
 				continue;
 			}
 
 			func->add_statement(*it);
+		}
+
+		if (obj) {
+			if (type < STRING || type > ZERO) {
+				cur_obj       = objects.end();
+				obj           = 0;
+				continue;
+			}
+
+			obj->add_statement(*it);
 		}
 	}
 }
@@ -630,70 +657,6 @@ void asm_file::load_object_sizes()
 		if (!is.fail())
 			objects[name].size = in;
 	}
-}
-
-void asm_file::load_object(string name)
-{
-	stack<asm_section> stack;
-	asm_section section;
-	bool found = false;
-
-	for (vector<asm_statement>::iterator it = statements.begin();
-	     it != statements.end();
-	     it++) {
-		asm_section text, data(".data,\"rw\"");
-		stmt_type type = it->type;
-
-		/* Section tracking */
-		if (type == TEXT) {
-			section = text;
-		} else if (type == DATA) {
-			section = data;
-		} else if (type == PUSHSECTION) {
-			stack.push(section);
-		} else if (type == POPSECTION) {
-			if (!stack.empty()) {
-				section = stack.top();
-				stack.pop();
-			} else {
-				cout << "WARNING: .popsection on empty stack" << endl;
-			}
-		} else if (type == SECTION) {
-			section = *(it->obj_section);
-		}
-
-		/* Search for the object */
-		if (!found) {
-			if (type == COMM) {
-				if ((it->params.size() < 1) ||
-				    (it->params[0] != name))
-					continue;
-
-				objects[name].add_statement(*it);
-				found = true;
-
-				break;
-			}
-
-			if (type != LABEL)
-				continue;
-
-			if (it->obj_label->label != name)
-				continue;
-
-			objects[name].section = section;
-			found = true;
-
-			continue;
-		}
-
-		/* We found the object */
-		if (type < STRING && type > ZERO)
-			break;
-
-		objects[name].add_statement(*it);
-	}
-
 }
 
 bool asm_file::has_function(std::string name) const
