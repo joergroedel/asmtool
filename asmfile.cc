@@ -414,8 +414,7 @@ void asm_statement::rename_label(std::string from, std::string to)
 		obj_instruction->rename_label(from, to);
 }
 
-asm_function::asm_function(const string& _name)
-	: name(_name)
+asm_function::asm_function()
 {
 }
 
@@ -512,14 +511,12 @@ void asm_file::analyze()
 		obj_type = it->obj_type;
 
 		if (obj_type->type == asm_type::FUNCTION)
-			functions.push_back(obj_type->symbol);
+			functions[obj_type->symbol] = asm_function();
 		else if (obj_type->type == asm_type::OBJECT)
 			objects[obj_type->symbol] = asm_object();
 		else
 			cerr << "Unknown type " << obj_type->symbol << endl;
 	}
-
-	sort(functions.begin(), functions.end());
 
 	load_object_scopes();
 	load_object_sizes();
@@ -528,10 +525,13 @@ void asm_file::analyze()
 	     it != objects.end();
 	     ++it)
 		load_object(it->first);
+
+	load_functions();
 }
 
-asm_function *asm_file::get_function(string name)
+void asm_file::load_functions()
 {
+	map<string, asm_function>::iterator current = functions.end();
 	stack<asm_section> stack;
 	asm_function *func = 0;
 	asm_section section;
@@ -560,34 +560,36 @@ asm_function *asm_file::get_function(string name)
 			section = *(it->obj_section);
 		}
 
-		/* Search for the function */
-		if (!func) {
-			if (type != LABEL)
+		if (type == LABEL) {
+			map<string, asm_function>::iterator l = functions.find(it->obj_label->label);
+			if (l == functions.end())
 				continue;
-
-			if (it->obj_label->label != name)
-				continue;
-
-			func = new asm_function(name);
+			current = l;
+			func = &current->second;
 			func->section = section;
-
 			continue;
 		}
 
-		/* We found the function */
+		if (current != functions.end()) {
 
-		func->add_statement(*it);
+			/* We are in the middle of a function */
+			if (type == SIZE && it->obj_size &&
+			    it->obj_size->symbol == current->first) {
+				current = functions.end();
+				continue;
+			}
 
-		if (type == SIZE && it->obj_size) {
-			if (it->obj_size->symbol == name)
-				break;
+			func->add_statement(*it);
 		}
-
 	}
+}
 
-	func->normalize();
+asm_function *asm_file::get_function(string name)
+{
+	if (!has_function(name))
+		return 0;
 
-	return func;
+	return new asm_function(functions[name]);
 }
 
 void asm_file::load_object_scopes()
@@ -705,14 +707,7 @@ void asm_file::load_object(string name)
 
 bool asm_file::has_function(std::string name) const
 {
-	for (vector<string>::const_iterator it = functions.begin();
-	     it != functions.end();
-	     it++) {
-		if (name == *it)
-			return true;
-	}
-
-	return false;
+	return (functions.find(name) != functions.end());
 }
 
 asm_object *asm_file::get_object(string name)
@@ -747,10 +742,10 @@ void asm_file::dump_statements() const
 void asm_file::dump_functions() const
 {
 	cout << "Functions (" << functions.size() << "):" << endl;
-	for (vector<string>::const_iterator it = functions.begin();
+	for (map<string, asm_function>::const_iterator it = functions.begin();
 	     it != functions.end();
 	     ++it)
-		cout << "    " << *it << endl;
+		cout << "    " << it->first << endl;
 }
 
 void asm_file::dump_objects() const

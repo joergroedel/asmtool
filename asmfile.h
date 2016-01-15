@@ -152,11 +152,10 @@ struct asm_statement {
 
 struct asm_function {
 
-	std::string name;
 	std::vector<asm_statement> statements;
 	asm_section section;
 
-	asm_function(const std::string& name);
+	asm_function();
 	void add_statement(const asm_statement &stmt);
 
 	void normalize();
@@ -184,7 +183,7 @@ struct asm_object {
 struct asm_file {
 
 	std::vector<asm_statement>		statements;
-	std::vector<std::string>		functions;
+	std::map<std::string, asm_function>	functions;
 	std::map<std::string, asm_object>	objects;
 
 	asm_file();
@@ -197,6 +196,7 @@ struct asm_file {
 	void load_object_scopes();
 	void load_object_sizes();
 	void load_object(std::string name);
+	void load_functions();
 
 	bool has_function(std::string name) const;
 	bool has_object(std::string name) const;

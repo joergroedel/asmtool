@@ -215,21 +215,25 @@ void diff(asm_file *file1, asm_file *file2, ostream &os)
 	bool changes = false;
 
 	/* Search for new and changed functions */
-	for (vector<string>::const_iterator it = file2->functions.begin();
+	for (map<string, asm_function>::const_iterator it = file2->functions.begin();
 	     it != file2->functions.end();
 	     it++) {
+		string name = it->first;
 		bool changed;
 
-		if (generated_symbol(*it))
+		if (generated_symbol(name))
 			continue;
 
-		if (!file1->has_function(*it)) {
-			new_functions.push_back(*it);
+		if (!file1->has_function(name)) {
+			new_functions.push_back(name);
 			continue;
 		}
 
-		asm_function *func1 = file1->get_function(*it);
-		asm_function *func2 = file2->get_function(*it);
+		asm_function *func1 = file1->get_function(name);
+		asm_function *func2 = file2->get_function(name);
+
+		func1->normalize();
+		func2->normalize();
 
 		map<string, string> symbol_map;
 
@@ -239,7 +243,7 @@ void diff(asm_file *file1, asm_file *file2, ostream &os)
 			changed = compare_symbol_map(file1, file2, symbol_map);
 
 		if (changed)
-			changed_functions.push_back(*it);
+			changed_functions.push_back(name);
 
 #if 0
 		cout << "Compared Function " << *it << endl;
@@ -259,14 +263,16 @@ void diff(asm_file *file1, asm_file *file2, ostream &os)
 	}
 
 	/* Look for removed functions */
-	for (vector<string>::const_iterator it = file1->functions.begin();
+	for (map<string, asm_function>::const_iterator it = file1->functions.begin();
 	     it != file1->functions.end();
 	     it++) {
-		if (generated_symbol(*it))
+		string name = it->first;
+
+		if (generated_symbol(name))
 			continue;
 
-		if (!file2->has_function(*it))
-			removed_functions.push_back(*it);
+		if (!file2->has_function(name))
+			removed_functions.push_back(name);
 	}
 
 	if (function_list("Removed", removed_functions, os))
