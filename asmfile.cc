@@ -475,6 +475,20 @@ asm_file::asm_file()
 void asm_file::add_statement(const asm_statement &stmt)
 {
 	statements.push_back(stmt);
+
+	if (stmt.type == COMM) {
+		objects[stmt.obj_comm->symbol] = asm_object();
+		objects[stmt.obj_comm->symbol].size = stmt.obj_comm->size;
+	} else if (stmt.type == TYPE) {
+		asm_type *obj_type = stmt.obj_type;
+
+		if (obj_type->type == asm_type::FUNCTION)
+			functions[obj_type->symbol] = asm_function();
+		else if (obj_type->type == asm_type::OBJECT)
+			objects[obj_type->symbol] = asm_object();
+		else
+			cout << "Unknown type " << obj_type->symbol << endl;
+	}
 }
 
 const char *scope_name(asm_object::object_scope scope)
@@ -495,29 +509,6 @@ const char *scope_name(asm_object::object_scope scope)
 
 void asm_file::analyze()
 {
-	asm_type *obj_type;
-
-	for (vector<asm_statement>::iterator it = statements.begin();
-	     it != statements.end();
-	     it++) {
-		if (it->type == COMM) {
-			objects[it->obj_comm->symbol] = asm_object();
-			objects[it->obj_comm->symbol].size = it->obj_comm->size;
-		}
-
-		if (it->type != TYPE)
-			continue;
-
-		obj_type = it->obj_type;
-
-		if (obj_type->type == asm_type::FUNCTION)
-			functions[obj_type->symbol] = asm_function();
-		else if (obj_type->type == asm_type::OBJECT)
-			objects[obj_type->symbol] = asm_object();
-		else
-			cerr << "Unknown type " << obj_type->symbol << endl;
-	}
-
 	load_object_scopes();
 	load_object_sizes();
 
