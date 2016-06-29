@@ -17,6 +17,33 @@
 
 using namespace std;
 
+/* Used in LCS computation and diff creation */
+struct __matrix {
+	unsigned x, y;
+	int *m;
+
+	__matrix(unsigned _x, unsigned _y)
+		: x(_x), y(_y)
+	{
+		m = new int[_x * _y];
+	}
+
+	~__matrix()
+	{
+		delete[] m;
+	}
+
+	void set(unsigned _x, unsigned _y, int value)
+	{
+		m[_y*x+_x] = value;
+	}
+
+	int get(unsigned _x, unsigned _y)
+	{
+		return m[_y*x+_x];
+	}
+};
+
 static bool compare_param(asm_file *file1, asm_param& param1,
 			  asm_file *file2, asm_param &param2,
 			  map<string, string> &symbol_map)
@@ -37,6 +64,7 @@ static bool compare_param(asm_file *file1, asm_param& param1,
 		if (t1.type != t2.type)
 			goto next_false;
 
+#if 0
 		if (t1.type == asm_token::IDENTIFIER) {
 			if (symbol_map.find(t2.token) != symbol_map.end()) {
 				if (symbol_map[t2.token] != t1.token) {
@@ -48,6 +76,7 @@ static bool compare_param(asm_file *file1, asm_param& param1,
 				symbol_map[t2.token] = t1.token;
 			}
 		}
+#endif
 
 		if (t1.token == t2.token)
 			continue;
@@ -137,10 +166,39 @@ bool compare_functions(asm_file *file1, asm_function *f1,
 		       asm_file *file2, asm_function *f2,
 		       map<string, string> &symbol_map)
 {
-	size_t size1 = f1->statements.size();
-	size_t size2 = f2->statements.size();
-	bool ret = true;
+	int size1 = f1->statements.size();
+	int size2 = f2->statements.size();
+	struct __matrix m(size1 + 1, size2 + 1);
 
+	/*
+	 * Compute LCS matrix of both functions to
+	 * detect where they are different
+	 */
+	for(unsigned i = 0; i < m.x; i++)
+	{
+		for(unsigned j = 0; j < m.y; j++)
+		{
+			if (i == 0 || j == 0) {
+				m.set(i, j, 0);
+				continue;
+			}
+
+			asm_statement &s1 = f1->statements[i - 1];
+			asm_statement &s2 = f2->statements[j - 1];
+
+			if (compare_statements(file1, s1, file2, s2, symbol_map))
+				m.set(i, j, m.get(i - 1, j - 1) + 1);
+			else {
+				int a = m.get(i - 1, j);
+				int b = m.get(i, j - 1);
+				m.set(i, j, max(a, b));
+			}
+		}
+	}
+
+	return (size1 == size2 && m.get(size1, size1) == size1);
+
+#if 0
 	/* First check if the functions have the same size */
 	if (size1 != size2)
 		return false;
@@ -154,6 +212,7 @@ bool compare_functions(asm_file *file1, asm_function *f1,
 	}
 
 	return ret;
+#endif
 }
 
 static bool function_list(string type, const vector<string> &list, ostream &os)
@@ -238,8 +297,10 @@ void diff(asm_file *file1, asm_file *file2, ostream &os)
 
 		changed = !compare_functions(file1, func1, file2, func2, symbol_map);
 
+#if 0
 		if (!changed)
 			changed = compare_symbol_map(file1, file2, symbol_map);
+#endif
 
 		if (changed)
 			changed_functions.push_back(name);
