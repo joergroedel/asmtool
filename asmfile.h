@@ -132,6 +132,7 @@ struct asm_comm {
 
 struct asm_statement {
 
+	std::string stmt;
 	stmt_type type;
 	std::vector<std::string> params;
 

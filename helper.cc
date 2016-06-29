@@ -110,3 +110,27 @@ bool generated_symbol(string symbol)
 	return (symbol.find_first_of(".") != string::npos);
 }
 
+string expand_tab(string input)
+{
+	size_t index = 0;
+
+	while (true) {
+		index = input.find('\t', index);
+		if (index == std::string::npos)
+			break;
+
+		size_t delta = (4 - (index % 4));
+		const char *d_str;
+
+		switch (delta) {
+			case 0: d_str = ""; break;
+			case 1: d_str = " "; break;
+			case 2: d_str = "  "; break;
+			case 3: d_str = "   "; break;
+			case 4: d_str = "    "; break;
+		}
+		input.replace(index, 1, d_str);
+	}
+
+	return input;
+}

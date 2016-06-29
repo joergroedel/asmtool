@@ -18,5 +18,6 @@ std::vector<std::string> split_trim(const char *delim,
 					   std::string line,
 					   unsigned splits = 0);
 bool generated_symbol(std::string symbol);
+std::string expand_tab(std::string input);
 
 #endif

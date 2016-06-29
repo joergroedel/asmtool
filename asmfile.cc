@@ -321,6 +321,8 @@ asm_statement::asm_statement(const std::string &line)
 	const stmt_map *map;
 	size_t i = 0;
 
+	stmt = line;
+
 	vector<string> items = split_trim(" \t", line, 1);
 	if (items.size() == 0)
 		return;
@@ -372,6 +374,7 @@ asm_statement::asm_statement(const std::string &line)
 asm_statement::asm_statement(const asm_statement& stmt)
 	: obj_instruction(0)
 {
+	this->stmt   = stmt.stmt;
 	type   = stmt.type;
 	params = stmt.params;
 

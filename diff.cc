@@ -7,6 +7,7 @@
  */
 
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <vector>
 #include <map>
@@ -17,15 +18,21 @@
 
 using namespace std;
 
+static void print_diff(struct __matrix &m,
+		       struct asm_function &f1,
+		       struct asm_function &f2);
+
 /* Used in LCS computation and diff creation */
 struct __matrix {
 	unsigned x, y;
 	int *m;
+	bool *r;
 
 	__matrix(unsigned _x, unsigned _y)
 		: x(_x), y(_y)
 	{
 		m = new int[_x * _y];
+		r = new bool[_x * _y];
 	}
 
 	~__matrix()
@@ -38,9 +45,19 @@ struct __matrix {
 		m[_y*x+_x] = value;
 	}
 
+	void set_r(unsigned _x, unsigned _y, bool  value)
+	{
+		r[_y*x+_x] = value;
+	}
+
 	int get(unsigned _x, unsigned _y)
 	{
 		return m[_y*x+_x];
+	}
+
+	bool get_r(unsigned _x, unsigned _y)
+	{
+		return r[_y*x+_x];
 	}
 };
 
@@ -164,11 +181,11 @@ bool compare_statements(asm_file *file1, asm_statement &s1,
 
 bool compare_functions(asm_file *file1, asm_function *f1,
 		       asm_file *file2, asm_function *f2,
-		       map<string, string> &symbol_map)
+		       map<string, string> &symbol_map,
+		       struct __matrix &m)
 {
 	int size1 = f1->statements.size();
 	int size2 = f2->statements.size();
-	struct __matrix m(size1 + 1, size2 + 1);
 
 	/*
 	 * Compute LCS matrix of both functions to
@@ -186,18 +203,19 @@ bool compare_functions(asm_file *file1, asm_function *f1,
 			asm_statement &s1 = f1->statements[i - 1];
 			asm_statement &s2 = f2->statements[j - 1];
 
-			if (compare_statements(file1, s1, file2, s2, symbol_map))
+			if (compare_statements(file1, s1, file2, s2, symbol_map)) {
 				m.set(i, j, m.get(i - 1, j - 1) + 1);
-			else {
+				m.set_r(i, j, true);
+			} else {
 				int a = m.get(i - 1, j);
 				int b = m.get(i, j - 1);
 				m.set(i, j, max(a, b));
+				m.set_r(i, j, false);
 			}
 		}
 	}
 
 	return (size1 == size2 && m.get(size1, size1) == size1);
-
 #if 0
 	/* First check if the functions have the same size */
 	if (size1 != size2)
@@ -231,6 +249,7 @@ static bool function_list(string type, const vector<string> &list, ostream &os)
 	return true;
 }
 
+#if 0
 static bool compare_symbol_map(asm_file *file1, asm_file *file2,
 			       map<string, string> &symbol_map)
 {
@@ -264,6 +283,45 @@ static bool compare_symbol_map(asm_file *file1, asm_file *file2,
 
 	return changed;
 }
+#endif
+
+#define RESET   "\033[0m"
+#define BLACK   "\033[30m"      /* Black */
+#define RED     "\033[31m"      /* Red */
+#define GREEN   "\033[32m"      /* Green */
+#define WIDTH	48
+
+static void __print_diff(struct __matrix &m,
+			 struct asm_function &f1,
+			 struct asm_function &f2,
+			 int i, int j)
+{
+	cout << left;
+	if (i > 0 && j > 0 && m.get_r(i, j)) {
+		string stmt1 = expand_tab(trim(f1.statements[i - 1].stmt));
+		string stmt2 = expand_tab(trim(f2.statements[j - 1].stmt));
+
+		__print_diff(m, f1, f2, i - 1, j - 1);
+		cout << '\t' << setw(WIDTH) << stmt1 << "| " << stmt2 << endl;
+	} else if (j > 0 && (i == 0 || m.get(i, j - 1) >= m.get(i - 1, j))) {
+		string stmt = expand_tab(trim(f2.statements[j - 1].stmt));
+
+		__print_diff(m, f1, f2, i, j - 1);
+		cout << '\t' << GREEN << setw(WIDTH) << " " << "| " << stmt << RESET << endl;
+	} else if (i > 0 && (j == 0 || m.get(i, j - 1) < m.get(i - 1, j))) {
+		string stmt = expand_tab(trim(f1.statements[i - 1].stmt));
+
+		__print_diff(m, f1, f2, i - 1, j);
+		cout << '\t' << RED << setw(WIDTH) << stmt << "|" << RESET << endl;
+	}
+}
+
+static void print_diff(struct __matrix &m,
+		       struct asm_function &f1,
+		       struct asm_function &f2)
+{
+	__print_diff(m, f1, f2, m.x - 1, m.y - 1);
+}
 
 void diff(asm_file *file1, asm_file *file2, ostream &os)
 {
@@ -295,7 +353,17 @@ void diff(asm_file *file1, asm_file *file2, ostream &os)
 
 		map<string, string> symbol_map;
 
-		changed = !compare_functions(file1, func1, file2, func2, symbol_map);
+		int size1 = func1->statements.size();
+		int size2 = func2->statements.size();
+		struct __matrix m(size1 + 1, size2 + 1);
+
+		changed = !compare_functions(file1, func1, file2, func2, symbol_map, m);
+
+		if (changed) {
+			cout << "Function " << name << " changed, diff:" << endl;
+			print_diff(m, *func1, *func2);
+			cout << endl;
+		}
 
 #if 0
 		if (!changed)
