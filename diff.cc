@@ -95,6 +95,44 @@ static bool compare_instructions(asm_file *file1, asm_instruction *ins1,
 	return ret;
 }
 
+bool compare_statements(asm_file *file1, asm_statement &s1,
+			asm_file *file2, asm_statement &s2,
+			map<string, string> &symbol_map)
+{
+	if (s1.type != s2.type)
+		return false;
+
+	/*
+	 * First check for labels. They need to be identical because
+	 * they are normalized between the two versions of the function
+	 */
+	if ((s1.type == LABEL) &&
+	    (s1.obj_label->label != s2.obj_label->label))
+		return false;
+
+	if (s1.type == INSTRUCTION) {
+		if (!compare_instructions(file1, s1.obj_instruction,
+					  file2, s2.obj_instruction,
+					  symbol_map))
+			return false;
+	}
+
+	if (s1.type != LABEL && s1.type != INSTRUCTION) {
+		unsigned int i;
+
+		if (s1.params.size() != s2.params.size())
+			return false;
+
+		for (i = 0; i < s1.params.size(); i++) {
+			if (s1.params[i] != s2.params[i]) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
 bool compare_functions(asm_file *file1, asm_function *f1,
 		       asm_file *file2, asm_function *f2,
 		       map<string, string> &symbol_map)
@@ -112,47 +150,8 @@ bool compare_functions(asm_file *file1, asm_function *f1,
 		asm_statement &s1 = f1->statements[i];
 		asm_statement &s2 = f2->statements[i];
 
-		if (s1.type != s2.type) {
-			ret = false;
-			continue;
-		}
-
-		/*
-		 * First check for labels. They need to be identical because
-		 * they are normalized between the two versions of the function
-		 */
-		if ((s1.type == LABEL) &&
-		    (s1.obj_label->label != s2.obj_label->label)) {
-			ret = false;
-			continue;
-		}
-
-		if (s1.type == INSTRUCTION) {
-			if (!compare_instructions(file1, s1.obj_instruction,
-						  file2, s2.obj_instruction,
-						  symbol_map)) {
-				ret = false;
-				continue;
-			}
-		}
-
-		if (s1.type != LABEL && s1.type != INSTRUCTION) {
-			unsigned int i;
-
-			if (s1.params.size() != s2.params.size()) {
-				ret = false;
-				continue;
-			}
-
-			for (i = 0; i < s1.params.size(); i++) {
-				if (s1.params[i] != s2.params[i]) {
-					ret = false;
-					break;
-				}
-			}
-		}
+		ret = ret && compare_statements(file1, s1, file2, s2, symbol_map);
 	}
-
 
 	return ret;
 }
