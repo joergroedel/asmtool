@@ -323,7 +323,7 @@ static void print_diff(vector<diff_item> &diff,
 			start = last_printed + 1;
 		}
 
-		end = min(i + context, size - 1);
+		end = min(i + context + 1, size - 1);
 
 
 		for (j = start; j < end; ++j) {
@@ -337,11 +337,11 @@ static void print_diff(vector<diff_item> &diff,
 				c = '+';
 				color = GREEN;
 				line = diff[j].new_line;
-				end = min(end + 1, size - 1);
+				end = min(j + context + 1, size - 1);
 			} else if (diff[j].change == diff_item::MINUS) {
 				color = RED;
 				c = '-';
-				end = min(end + 1, size - 1);
+				end = min(j + context + 1, size - 1);
 			}
 
 			if (opts.pretty) {
