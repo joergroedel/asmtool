@@ -569,15 +569,15 @@ void asm_file::load_objects()
 				cur_fn        = f;
 				func          = &cur_fn->second;
 				func->section = section;
+				continue;
 			} else if (o != objects.end()) {
 				cur_fn       = functions.end();
 				func         = 0;
 				cur_obj      = o;
 				obj          = &cur_obj->second;
 				obj->section = section;
+				continue;
 			}
-
-			continue;
 		}
 
 		if (func) {
