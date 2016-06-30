@@ -247,7 +247,7 @@ static bool function_list(string type, const vector<string> &list, ostream &os)
 	for (vector<string>::const_iterator it = list.begin();
 	     it != list.end();
 	     it++) {
-		os << "        " << *it << endl;
+		os << "    " << *it << endl;
 	}
 
 	return true;
@@ -327,9 +327,75 @@ static void print_diff(struct __matrix &m,
 	__print_diff(m, f1, f2, m.x - 1, m.y - 1);
 }
 
+struct diff_item {
+	enum {
+		PLUS,
+		MINUS,
+		EQUAL,
+	} change;
+
+	string old_line;
+	string new_line;
+};
+
+static void __create_diff(struct __matrix &m,
+			  struct asm_function &f1,
+			  struct asm_function &f2,
+			  vector<diff_item> &output,
+			  int i, int j)
+{
+	struct diff_item item;
+
+	if (i > 0 && j > 0 && m.get_r(i, j)) {
+		string stmt1 = expand_tab(trim(f1.statements[i - 1].stmt));
+		string stmt2 = expand_tab(trim(f2.statements[j - 1].stmt));
+
+		__create_diff(m, f1, f2, output, i - 1, j - 1);
+
+		item.change   = diff_item::EQUAL,
+		item.old_line = stmt1;
+		item.new_line = stmt2;
+
+		output.push_back(item);
+	} else if (j > 0 && (i == 0 || m.get(i, j - 1) >= m.get(i - 1, j))) {
+		string stmt = expand_tab(trim(f2.statements[j - 1].stmt));
+
+		__create_diff(m, f1, f2, output, i, j - 1);
+
+		item.change   = diff_item::PLUS;
+		item.old_line = "";
+		item.new_line = stmt;
+
+		output.push_back(item);
+	} else if (i > 0 && (j == 0 || m.get(i, j - 1) < m.get(i - 1, j))) {
+		string stmt = expand_tab(trim(f1.statements[i - 1].stmt));
+
+		__create_diff(m, f1, f2, output, i - 1, j);
+
+		item.change   = diff_item::MINUS;
+		item.old_line = stmt;
+		item.new_line = "";
+
+		output.push_back(item);
+	}
+}
+
+static void create_diff(struct __matrix &m,
+			struct asm_function &f1,
+			struct asm_function &f2,
+			vector<diff_item> &output)
+{
+	__create_diff(m, f1, f2, output, m.x - 1, m.y - 1);
+}
+
+struct changed_function {
+	string name;
+	vector<diff_item> diff;
+};
+
 void diff(asm_file *file1, asm_file *file2, ostream &os)
 {
-	vector<string> changed_functions;
+	vector<changed_function> changed_functions;
 	vector<string> removed_functions;
 	vector<string> new_functions;
 	bool changes = false;
@@ -363,19 +429,22 @@ void diff(asm_file *file1, asm_file *file2, ostream &os)
 
 		changed = !compare_functions(file1, func1, file2, func2, symbol_map, m);
 
-		if (changed) {
-			cout << "Function " << name << " changed, diff:" << endl;
-			print_diff(m, *func1, *func2);
-			cout << endl;
-		}
-
 #if 0
 		if (!changed)
 			changed = compare_symbol_map(file1, file2, symbol_map);
 #endif
 
-		if (changed)
-			changed_functions.push_back(name);
+		if (changed) {
+			struct changed_function cf;
+			size_t i;
+
+			cf.name = name;
+			changed_functions.push_back(cf);
+
+			i = changed_functions.size() - 1;
+
+			create_diff(m, *func1, *func2, changed_functions[i].diff);
+		}
 
 #if 0
 		cout << "Compared Function " << *it << endl;
@@ -413,8 +482,17 @@ void diff(asm_file *file1, asm_file *file2, ostream &os)
 	if (function_list("New",     new_functions,     os))
 		changes = true;
 
-	if (function_list("Changed", changed_functions, os))
+	if (changed_functions.size() > 0) {
 		changes = true;
+
+		os << "Changed functions:" << endl;
+
+		for (vector<changed_function>::iterator i = changed_functions.begin();
+		     i != changed_functions.end();
+		     ++i) {
+			os << "    " << i->name << endl;
+		     }
+	}
 
 	if (!changes)
 		os << "No changes found" << endl;
