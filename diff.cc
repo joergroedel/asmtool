@@ -18,10 +18,6 @@
 
 using namespace std;
 
-static void print_diff(struct __matrix &m,
-		       struct asm_function &f1,
-		       struct asm_function &f2);
-
 diff_options::diff_options()
 	: show(false), full(false)
 { }
@@ -295,38 +291,6 @@ static bool compare_symbol_map(asm_file *file1, asm_file *file2,
 #define GREEN   "\033[32m"      /* Green */
 #define WIDTH	48
 
-static void __print_diff(struct __matrix &m,
-			 struct asm_function &f1,
-			 struct asm_function &f2,
-			 int i, int j)
-{
-	cout << left;
-	if (i > 0 && j > 0 && m.get_r(i, j)) {
-		string stmt1 = expand_tab(trim(f1.statements[i - 1].stmt));
-		string stmt2 = expand_tab(trim(f2.statements[j - 1].stmt));
-
-		__print_diff(m, f1, f2, i - 1, j - 1);
-		cout << '\t' << setw(WIDTH) << stmt1 << "| " << stmt2 << endl;
-	} else if (j > 0 && (i == 0 || m.get(i, j - 1) >= m.get(i - 1, j))) {
-		string stmt = expand_tab(trim(f2.statements[j - 1].stmt));
-
-		__print_diff(m, f1, f2, i, j - 1);
-		cout << '\t' << GREEN << setw(WIDTH) << " " << "| " << stmt << RESET << endl;
-	} else if (i > 0 && (j == 0 || m.get(i, j - 1) < m.get(i - 1, j))) {
-		string stmt = expand_tab(trim(f1.statements[i - 1].stmt));
-
-		__print_diff(m, f1, f2, i - 1, j);
-		cout << '\t' << RED << setw(WIDTH) << stmt << "|" << RESET << endl;
-	}
-}
-
-static void print_diff(struct __matrix &m,
-		       struct asm_function &f1,
-		       struct asm_function &f2)
-{
-	__print_diff(m, f1, f2, m.x - 1, m.y - 1);
-}
-
 struct diff_item {
 	enum {
 		PLUS,
@@ -337,6 +301,56 @@ struct diff_item {
 	string old_line;
 	string new_line;
 };
+
+static void print_diff(vector<diff_item> &diff,
+		       ostream &os,
+		       struct diff_options &opts)
+{
+	int size = diff.size();
+	int last_printed = -1;
+
+	for (int i = 0; i < size; ++i) {
+		int start, end, j;
+
+		if (diff[i].change == diff_item::EQUAL)
+			continue;
+
+		if (i - 3 > last_printed) {
+			os << "         [...]" << endl;
+			start = i - 3;
+		} else {
+			start = last_printed + 1;
+		}
+
+		end = min(i + 3, size - 1);
+
+
+		for (j = start; j < end; ++j) {
+			string line = diff[j].old_line;
+			const char *color;
+			char c = ' ';
+
+			color = BLACK;
+
+			if (diff[j].change == diff_item::PLUS) {
+				c = '+';
+				color = GREEN;
+				line = diff[j].new_line;
+				end = min(end + 1, size - 1);
+			} else if (diff[j].change == diff_item::MINUS) {
+				color = RED;
+				c = '-';
+				end = min(end + 1, size - 1);
+			}
+
+			os << "        " << color << c << line << RESET << endl;
+
+			last_printed = j;
+		}
+
+		i = j + 1;
+	}
+}
 
 static void __create_diff(struct __matrix &m,
 			  struct asm_function &f1,
@@ -393,7 +407,7 @@ struct changed_function {
 	vector<diff_item> diff;
 };
 
-void diff(asm_file *file1, asm_file *file2, ostream &os)
+void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &opts)
 {
 	vector<changed_function> changed_functions;
 	vector<string> removed_functions;
@@ -491,6 +505,7 @@ void diff(asm_file *file1, asm_file *file2, ostream &os)
 		     i != changed_functions.end();
 		     ++i) {
 			os << "    " << i->name << endl;
+			print_diff(i->diff, os, opts);
 		     }
 	}
 

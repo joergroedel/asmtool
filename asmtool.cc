@@ -127,7 +127,7 @@ static int do_diff(const char *cmd, int argc, char **argv)
 	file1 = load_file(argv[optind++]);
 	file2 = load_file(argv[optind++]);
 
-	diff(file1, file2, cout);
+	diff(file1, file2, cout, diff_opts);
 
 	delete file1;
 	delete file2;
