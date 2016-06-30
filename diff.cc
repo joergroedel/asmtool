@@ -22,6 +22,10 @@ static void print_diff(struct __matrix &m,
 		       struct asm_function &f1,
 		       struct asm_function &f2);
 
+diff_options::diff_options()
+	: show(false), full(false)
+{ }
+
 /* Used in LCS computation and diff creation */
 struct __matrix {
 	unsigned x, y;

@@ -14,6 +14,13 @@
 
 #include "asmfile.h"
 
+struct diff_options {
+	bool show;
+	bool full;
+
+	diff_options();
+};
+
 void diff(asm_file *file1, asm_file *file2, std::ostream &os);
 bool compare_statements(asm_file *file1, asm_statement &s1,
 			asm_file *file2, asm_statement &s2,

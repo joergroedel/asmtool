@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#include <getopt.h>
+
 #include "asmfile.h"
 #include "helper.h"
 #include "diff.h"
@@ -54,51 +56,6 @@ asm_file *load_file(const char *name)
 	return file;
 }
 
-static int command_diff(int argc, char **argv)
-{
-	asm_file *file1, *file2;
-	bool verbose = false;
-
-	while (argc) {
-		string option;
-
-		argv += 1;
-		argc -= 1;
-
-		option = argv[0];
-		if (!option.size())
-			continue;
-
-		if (option[0] != '-')
-			break;
-
-		if (option == "-v") {
-			verbose = true;
-		} else {
-			cerr << "Unknown option: " << option << endl;
-			return 1;
-		}
-	}
-
-	if (argc != 2) {
-		cerr << "2 File parameters required" << endl;
-		return 1;
-	}
-
-	if (verbose)
-		cout << "Running in verbose mode" << endl;
-
-	file1 = load_file(argv[0]);
-	file2 = load_file(argv[1]);
-
-	if (!file1 || !file2)
-		return 1;
-
-	diff(file1, file2, cout);
-
-	return 0;
-}
-
 void usage(const char *cmd)
 {
 	cout << "Usage: " << cmd << " <subcommand> <options>" << endl;
@@ -107,9 +64,81 @@ void usage(const char *cmd)
 	cout << "        help - Print this message" << endl;
 }
 
+enum {
+	OPTION_DIFF_HELP,
+	OPTION_DIFF_SHOW,
+	OPTION_DIFF_FULL,
+};
+
+static struct option diff_options[] = {
+	{ "help",	no_argument,		0, OPTION_DIFF_HELP	},
+	{ "show",	no_argument,		0, OPTION_DIFF_SHOW	},
+	{ "full",	no_argument,		0, OPTION_DIFF_FULL	},
+	{ 0,		0,			0, 0			}
+};
+
+static void usage_diff(const char *cmd)
+{
+	cout << "Usage: " << cmd << " diff [options] old_file new_file" << endl;
+	cout << "Options:" << endl;
+	cout << "    --help, -h    - Print this help message" << endl;
+	cout << "    --show, -s    - Show differences between functions" << endl;
+	cout << "    --full, -f    - Print diff of full function" << endl;
+}
+
+static int do_diff(const char *cmd, int argc, char **argv)
+{
+	struct diff_options diff_opts;
+	asm_file *file1, *file2;
+	int c;
+
+	while (true) {
+		int opt_idx;
+
+		c = getopt_long(argc, argv, "hsf", diff_options, &opt_idx);
+		if (c == -1)
+			break;
+
+		switch (c) {
+		case OPTION_DIFF_HELP:
+		case 'h':
+			usage_diff(cmd);
+			return 0;
+		case OPTION_DIFF_SHOW:
+		case 's':
+			diff_opts.show = true;
+			break;
+		case OPTION_DIFF_FULL:
+		case 'f':
+			diff_opts.full = true;
+			break;
+		default:
+			usage_diff(cmd);
+			return 1;
+		}
+	}
+
+	if (optind + 2 > argc) {
+		cout << "Two file parameters required" << endl;
+		usage_diff(cmd);
+		return 1;
+	}
+
+	file1 = load_file(argv[optind++]);
+	file2 = load_file(argv[optind++]);
+
+	diff(file1, file2, cout);
+
+	delete file1;
+	delete file2;
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	string command;
+	int ret = 0;
 
 	if (argc < 2) {
 		usage(argv[0]);
@@ -119,9 +148,14 @@ int main(int argc, char **argv)
 	command = argv[1];
 
 	if (command == "diff")
-		return command_diff(argc - 1, argv + 1);
+		ret = do_diff(argv[0], argc - 1, argv + 1);
 	else if (command == "help")
 		usage(argv[0]);
+	else {
+		cerr << "Unknown sub-command: " << command << endl;
+		usage(argv[0]);
+		ret = 1;
+	}
 
-	return 0;
+	return ret;
 }
