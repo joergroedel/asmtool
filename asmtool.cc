@@ -112,7 +112,7 @@ static int do_diff(const char *cmd, int argc, char **argv)
 			break;
 		case OPTION_DIFF_FULL:
 		case 'f':
-			diff_opts.full = true;
+			diff_opts.context = 1 << 16;
 			break;
 		case 'U':
 			diff_opts.context = max(atoi(optarg), 0);
