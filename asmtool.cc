@@ -69,12 +69,14 @@ enum {
 	OPTION_DIFF_HELP,
 	OPTION_DIFF_SHOW,
 	OPTION_DIFF_FULL,
+	OPTION_DIFF_PRETTY,
 };
 
 static struct option diff_options[] = {
 	{ "help",	no_argument,		0, OPTION_DIFF_HELP	},
 	{ "show",	no_argument,		0, OPTION_DIFF_SHOW	},
 	{ "full",	no_argument,		0, OPTION_DIFF_FULL	},
+	{ "pretty",	no_argument,		0, OPTION_DIFF_PRETTY	},
 	{ 0,		0,			0, 0			}
 };
 
@@ -85,6 +87,7 @@ static void usage_diff(const char *cmd)
 	cout << "    --help, -h    - Print this help message" << endl;
 	cout << "    --show, -s    - Show differences between functions" << endl;
 	cout << "    --full, -f    - Print diff of full function" << endl;
+	cout << "    --pretty, -p  - Print a side-by-side diff" << endl;
 	cout << "    -U <num>      - Lines of context around changes" << endl;
 }
 
@@ -97,7 +100,7 @@ static int do_diff(const char *cmd, int argc, char **argv)
 	while (true) {
 		int opt_idx;
 
-		c = getopt_long(argc, argv, "hsfU:", diff_options, &opt_idx);
+		c = getopt_long(argc, argv, "hsfU:p", diff_options, &opt_idx);
 		if (c == -1)
 			break;
 
@@ -113,6 +116,10 @@ static int do_diff(const char *cmd, int argc, char **argv)
 		case OPTION_DIFF_FULL:
 		case 'f':
 			diff_opts.context = 1 << 16;
+			break;
+		case OPTION_DIFF_PRETTY:
+		case 'p':
+			diff_opts.pretty = true;
 			break;
 		case 'U':
 			diff_opts.context = max(atoi(optarg), 0);

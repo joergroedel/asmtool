@@ -19,7 +19,7 @@
 using namespace std;
 
 diff_options::diff_options()
-	: show(false), full(false), context(3)
+	: show(false), pretty(false), context(3)
 { }
 
 /* Used in LCS computation and diff creation */
@@ -344,7 +344,19 @@ static void print_diff(vector<diff_item> &diff,
 				end = min(end + 1, size - 1);
 			}
 
-			os << "        " << color << c << line << RESET << endl;
+			if (opts.pretty) {
+				string stmt1 = diff[j].old_line;
+				string stmt2 = diff[j].new_line;
+
+				if (stmt1.size() >= 40)
+					stmt1 = stmt1.substr(0, 40);
+
+				os << left;
+				os << "         " << color << setw(40) << stmt1;
+				os << "| " << stmt2 << RESET << endl;
+			} else {
+				os << "        " << color << c << line << RESET << endl;
+			}
 
 			last_printed = j;
 		}
