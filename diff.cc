@@ -19,7 +19,7 @@
 using namespace std;
 
 diff_options::diff_options()
-	: show(false), full(false)
+	: show(false), full(false), context(3)
 { }
 
 /* Used in LCS computation and diff creation */
@@ -306,6 +306,7 @@ static void print_diff(vector<diff_item> &diff,
 		       ostream &os,
 		       struct diff_options &opts)
 {
+	int context = opts.context;
 	int size = diff.size();
 	int last_printed = -1;
 
@@ -315,14 +316,14 @@ static void print_diff(vector<diff_item> &diff,
 		if (diff[i].change == diff_item::EQUAL)
 			continue;
 
-		if (i - 3 > last_printed) {
+		if (i - context > last_printed) {
 			os << "         [...]" << endl;
-			start = i - 3;
+			start = i - context;
 		} else {
 			start = last_printed + 1;
 		}
 
-		end = min(i + 3, size - 1);
+		end = min(i + context, size - 1);
 
 
 		for (j = start; j < end; ++j) {

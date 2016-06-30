@@ -17,6 +17,7 @@
 struct diff_options {
 	bool show;
 	bool full;
+	int context;
 
 	diff_options();
 };
