@@ -296,6 +296,10 @@ static bool compare_symbol_map(asm_file *file1, asm_file *file2,
 
 		asm_function *func_old = file1->get_function(sym_old);
 		asm_function *func_new = file2->get_function(sym_new);
+
+		func_old->normalize();
+		func_new->normalize();
+
 		map<string, string> func_symbol_map;
 
 		// TODO: Don't compare local and global symbols
@@ -446,6 +450,7 @@ static void create_diff(struct __matrix &m,
 
 struct changed_function {
 	string name;
+	bool refs_changed;
 	vector<diff_item> diff;
 };
 
@@ -461,7 +466,7 @@ void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &op
 	     it != file2->functions.end();
 	     it++) {
 		string name = it->first;
-		bool changed;
+		bool changed, refs_changed = false;
 
 		if (generated_symbol(name))
 			continue;
@@ -486,13 +491,14 @@ void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &op
 		changed = !compare_functions(file1, func1, file2, func2, symbol_map, m);
 
 		if (!changed)
-			changed = compare_symbol_map(file1, file2, symbol_map);
+			refs_changed = compare_symbol_map(file1, file2, symbol_map);
 
-		if (changed) {
+		if (changed || refs_changed) {
 			struct changed_function cf;
 			size_t i;
 
 			cf.name = name;
+			cf.refs_changed = refs_changed;
 			changed_functions.push_back(cf);
 
 			i = changed_functions.size() - 1;
@@ -533,7 +539,9 @@ void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &op
 		     i != changed_functions.end();
 		     ++i) {
 			os << "    " << i->name;
-			if (opts.show) {
+			if (i->refs_changed)
+				os << " (only referenced compiler-generated functions changed)";
+			else if (opts.show) {
 				os << ':' << endl;
 				print_diff(i->diff, os, opts);
 			}
