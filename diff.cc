@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <cstdio>
@@ -317,8 +318,12 @@ static bool compare_symbol_map(asm_file *file1, asm_file *file2,
 
 		changed = changed || c;
 
-		if (c)
-			changed_symbols.push_back(sym_new);
+		if (c) {
+			ostringstream os;
+
+			os << sym_new << " (is " << sym_old << " in old file)";
+			changed_symbols.push_back(os.str());
+		}
 	}
 
 	return changed;
