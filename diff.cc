@@ -84,20 +84,6 @@ static bool compare_param(asm_file *file1, asm_param& param1,
 		if (t1.type != t2.type)
 			goto next_false;
 
-#if 0
-		if (t1.type == asm_token::IDENTIFIER) {
-			if (symbol_map.find(t2.token) != symbol_map.end()) {
-				if (symbol_map[t2.token] != t1.token) {
-					cout << "WARNING: " << t2.token;
-					cout << " maps to " << symbol_map[t2.token];
-					cout << " and " << t1.token << endl;
-				}
-			} else {
-				symbol_map[t2.token] = t1.token;
-			}
-		}
-#endif
-
 		if (t1.token == t2.token)
 			continue;
 
@@ -185,6 +171,55 @@ bool compare_statements(asm_file *file1, asm_statement &s1,
 	return true;
 }
 
+void check_statements(asm_statement &s1, asm_statement &s2,
+		      map<string, string> &symbol_map)
+{
+	size_t size;
+
+	if (s1.type != INSTRUCTION)
+		return;
+
+	size = s1.obj_instruction->params.size();
+
+	/* Compare parameters */
+	for (size_t i = 0; i < size; ++i) {
+		asm_param &p1 = s1.obj_instruction->params[i];
+		asm_param &p2 = s2.obj_instruction->params[i];
+		size_t psize  = p1.tokens.size();
+
+		for (size_t j = 0; j < psize; j++) {
+			asm_token &t1 = p1.tokens[j];
+			asm_token &t2 = p2.tokens[j];
+
+			if (t1.type != asm_token::IDENTIFIER)
+				continue;
+
+			if (symbol_map.find(t2.token) != symbol_map.end()) {
+				if (symbol_map[t2.token] != t1.token) {
+					cout << "WARNING: " << t2.token;
+					cout << " maps to " << symbol_map[t2.token];
+					cout << " and " << t1.token << endl;
+				}
+			} else {
+				symbol_map[t2.token] = t1.token;
+			}
+		}
+	}
+}
+
+static void build_symbol_map(asm_function *f1, asm_function *f2,
+			     map<string, string> &symbol_map)
+{
+	size_t size = f1->statements.size();
+
+	for (size_t i = 0; i < size; ++i) {
+		asm_statement &s1 = f1->statements[i];
+		asm_statement &s2 = f2->statements[i];
+
+		check_statements(s1, s2, symbol_map);
+	}
+}
+
 bool compare_functions(asm_file *file1, asm_function *f1,
 		       asm_file *file2, asm_function *f2,
 		       map<string, string> &symbol_map,
@@ -192,6 +227,7 @@ bool compare_functions(asm_file *file1, asm_function *f1,
 {
 	int size1 = f1->statements.size();
 	int size2 = f2->statements.size();
+	bool ret;
 
 	/*
 	 * Compute LCS matrix of both functions to
@@ -221,22 +257,12 @@ bool compare_functions(asm_file *file1, asm_function *f1,
 		}
 	}
 
-	return (size1 == size2 && m.get(size1, size1) == size1);
-#if 0
-	/* First check if the functions have the same size */
-	if (size1 != size2)
-		return false;
+	ret = (size1 == size2 && m.get(size1, size1) == size1);
 
-	/* Now iterate over the function statements */
-	for (size_t i = 0; i < size1; ++i) {
-		asm_statement &s1 = f1->statements[i];
-		asm_statement &s2 = f2->statements[i];
-
-		ret = ret && compare_statements(file1, s1, file2, s2, symbol_map);
-	}
+	if (ret)
+		build_symbol_map(f1, f2, symbol_map);
 
 	return ret;
-#endif
 }
 
 static bool function_list(string type, const vector<string> &list, ostream &os)
@@ -255,7 +281,6 @@ static bool function_list(string type, const vector<string> &list, ostream &os)
 	return true;
 }
 
-#if 0
 static bool compare_symbol_map(asm_file *file1, asm_file *file2,
 			       map<string, string> &symbol_map)
 {
@@ -279,9 +304,12 @@ static bool compare_symbol_map(asm_file *file1, asm_file *file2,
 		map<string, string> func_symbol_map;
 
 		// TODO: Don't compare local and global symbols
+		int size1 = func_old->statements.size();
+		int size2 = func_new->statements.size();
+		struct __matrix m(size1 + 1, size2 + 1);
 		changed = !compare_functions(file1, func_old,
 					     file2, func_new,
-					     func_symbol_map);
+					     func_symbol_map, m);
 
 		delete func_old;
 		delete func_new;
@@ -289,7 +317,6 @@ static bool compare_symbol_map(asm_file *file1, asm_file *file2,
 
 	return changed;
 }
-#endif
 
 #define RESET   "\033[0m"
 #define BLACK   "\033[30m"      /* Black */
@@ -463,10 +490,8 @@ void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &op
 
 		changed = !compare_functions(file1, func1, file2, func2, symbol_map, m);
 
-#if 0
 		if (!changed)
 			changed = compare_symbol_map(file1, file2, symbol_map);
-#endif
 
 		if (changed) {
 			struct changed_function cf;
@@ -479,18 +504,6 @@ void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &op
 
 			create_diff(m, *func1, *func2, changed_functions[i].diff);
 		}
-
-#if 0
-		cout << "Compared Function " << *it << endl;
-		if (!symbol_map.empty()) {
-			cout << "  Symbol map:" << endl;
-			for (map<string, string>::iterator sym = symbol_map.begin();
-					sym != symbol_map.end();
-					++sym) {
-				cout << "    " << sym->first << " = " << sym->second << endl;
-			}
-		}
-#endif
 
 		delete func1;
 		delete func2;
