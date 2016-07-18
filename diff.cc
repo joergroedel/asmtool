@@ -549,9 +549,8 @@ void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &op
 		     i != changed_functions.end();
 		     ++i) {
 			os << "    " << i->name;
-			if (i->refs_changed)
+			if (i->refs_changed) {
 				os << " (only referenced compiler-generated functions changed)" << endl;
-			else if (i->refs_changed && opts.show) {
 				os << "        Changed referenced symbols:" << endl;
 				for (vector<string>::iterator j = i->changed_symbols.begin();
 				     j != i->changed_symbols.end();
