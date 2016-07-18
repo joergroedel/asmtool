@@ -53,6 +53,7 @@ static vector<asm_param> parse_asm_params(string param)
 		case '-':
 		case '*':
 		case '/':
+		case ':':
 			len  = 1;
 			type = asm_token::OPERATOR;
 			break;
