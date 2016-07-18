@@ -65,8 +65,7 @@ struct __matrix {
 };
 
 static bool compare_param(asm_file *file1, asm_param& param1,
-			  asm_file *file2, asm_param &param2,
-			  map<string, string> &symbol_map)
+			  asm_file *file2, asm_param &param2)
 {
 	size_t size1, size2;
 	bool ret = true;
@@ -104,8 +103,7 @@ static bool compare_param(asm_file *file1, asm_param& param1,
 }
 
 static bool compare_instructions(asm_file *file1, asm_instruction *ins1,
-				 asm_file *file2, asm_instruction *ins2,
-				 map<string, string> &symbol_map)
+				 asm_file *file2, asm_instruction *ins2)
 {
 	size_t size1, size2;
 	int ret = true;
@@ -122,8 +120,7 @@ static bool compare_instructions(asm_file *file1, asm_instruction *ins1,
 	/* Compare parameters */
 	for (size_t i = 0; i < size1; ++i) {
 		if (!compare_param(file1, ins1->params[i],
-				   file2, ins2->params[i],
-				   symbol_map))
+				   file2, ins2->params[i]))
 			ret = false;
 	}
 
@@ -131,8 +128,7 @@ static bool compare_instructions(asm_file *file1, asm_instruction *ins1,
 }
 
 bool compare_statements(asm_file *file1, asm_statement &s1,
-			asm_file *file2, asm_statement &s2,
-			map<string, string> &symbol_map)
+			asm_file *file2, asm_statement &s2)
 {
 	if (s1.type != s2.type)
 		return false;
@@ -150,8 +146,7 @@ bool compare_statements(asm_file *file1, asm_statement &s1,
 
 	if (s1.type == INSTRUCTION) {
 		if (!compare_instructions(file1, s1.obj_instruction,
-					  file2, s2.obj_instruction,
-					  symbol_map))
+					  file2, s2.obj_instruction))
 			return false;
 	}
 
@@ -245,7 +240,7 @@ bool compare_functions(asm_file *file1, asm_function *f1,
 			asm_statement &s1 = f1->statements[i - 1];
 			asm_statement &s2 = f2->statements[j - 1];
 
-			if (compare_statements(file1, s1, file2, s2, symbol_map)) {
+			if (compare_statements(file1, s1, file2, s2)) {
 				m.set(i, j, m.get(i - 1, j - 1) + 1);
 				m.set_r(i, j, true);
 			} else {
