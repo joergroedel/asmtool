@@ -148,6 +148,9 @@ bool compare_statements(asm_file *file1, asm_statement &s1,
 	if (s1.type != s2.type)
 		return false;
 
+	if (s1.type == LOC)
+		return true;
+
 	/*
 	 * First check for labels. They need to be identical because
 	 * they are normalized between the two versions of the function
