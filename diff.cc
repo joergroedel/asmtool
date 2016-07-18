@@ -10,7 +10,10 @@
 #include <iomanip>
 #include <string>
 #include <vector>
+#include <cstdio>
 #include <map>
+
+#include <unistd.h>
 
 #include "asmfile.h"
 #include "helper.h"
@@ -309,6 +312,7 @@ static void print_diff(vector<diff_item> &diff,
 		       ostream &os,
 		       struct diff_options &opts)
 {
+	bool colors = isatty(fileno(stdout));
 	int context = opts.context;
 	int size = diff.size();
 	int last_printed = -1;
@@ -328,21 +332,18 @@ static void print_diff(vector<diff_item> &diff,
 
 		end = min(i + context + 1, size - 1);
 
-
 		for (j = start; j < end; ++j) {
 			string line = diff[j].old_line;
-			const char *color;
+			const char *color = "";
 			char c = ' ';
-
-			color = BLACK;
 
 			if (diff[j].change == diff_item::PLUS) {
 				c = '+';
-				color = GREEN;
+				color = colors ? GREEN : "";
 				line = diff[j].new_line;
 				end = min(j + context + 1, size - 1);
 			} else if (diff[j].change == diff_item::MINUS) {
-				color = RED;
+				color = colors ? RED : "";
 				c = '-';
 				end = min(j + context + 1, size - 1);
 			}
@@ -356,10 +357,13 @@ static void print_diff(vector<diff_item> &diff,
 
 				os << left;
 				os << "         " << color << setw(40) << stmt1;
-				os << "| " << stmt2 << RESET << endl;
+				os << "| " << stmt2 << endl;
 			} else {
-				os << "        " << color << c << line << RESET << endl;
+				os << "        " << color << c << line << endl;
 			}
+
+			if (colors)
+				os << RESET;
 
 			last_printed = j;
 		}
