@@ -277,7 +277,8 @@ static bool function_list(string type, const vector<string> &list, ostream &os)
 }
 
 static bool compare_symbol_map(asm_file *file1, asm_file *file2,
-			       map<string, string> &symbol_map)
+			       map<string, string> &symbol_map,
+			       vector<string> &changed_symbols)
 {
 	bool changed = false;
 
@@ -285,6 +286,7 @@ static bool compare_symbol_map(asm_file *file1, asm_file *file2,
 			symbol != symbol_map.end();
 			++symbol) {
 		string sym_old(symbol->second), sym_new(symbol->first);
+		bool c;
 
 		if (!generated_symbol(sym_old) &&
 		    !generated_symbol(sym_new))
@@ -306,12 +308,17 @@ static bool compare_symbol_map(asm_file *file1, asm_file *file2,
 		int size1 = func_old->statements.size();
 		int size2 = func_new->statements.size();
 		struct __matrix m(size1 + 1, size2 + 1);
-		changed = !compare_functions(file1, func_old,
-					     file2, func_new,
-					     func_symbol_map, m);
+
+		c = !compare_functions(file1, func_old, file2, func_new,
+				       func_symbol_map, m);
 
 		delete func_old;
 		delete func_new;
+
+		changed = changed || c;
+
+		if (c)
+			changed_symbols.push_back(sym_new);
 	}
 
 	return changed;
@@ -450,8 +457,9 @@ static void create_diff(struct __matrix &m,
 
 struct changed_function {
 	string name;
-	bool refs_changed;
 	vector<diff_item> diff;
+	bool refs_changed;
+	vector<string> changed_symbols;
 };
 
 void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &opts)
@@ -487,11 +495,12 @@ void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &op
 		int size1 = func1->statements.size();
 		int size2 = func2->statements.size();
 		struct __matrix m(size1 + 1, size2 + 1);
+		vector<string> changed_symbols;
 
 		changed = !compare_functions(file1, func1, file2, func2, symbol_map, m);
 
 		if (!changed)
-			refs_changed = compare_symbol_map(file1, file2, symbol_map);
+			refs_changed = compare_symbol_map(file1, file2, symbol_map, changed_symbols);
 
 		if (changed || refs_changed) {
 			struct changed_function cf;
@@ -499,6 +508,7 @@ void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &op
 
 			cf.name = name;
 			cf.refs_changed = refs_changed;
+			cf.changed_symbols = changed_symbols;
 			changed_functions.push_back(cf);
 
 			i = changed_functions.size() - 1;
@@ -540,13 +550,22 @@ void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &op
 		     ++i) {
 			os << "    " << i->name;
 			if (i->refs_changed)
-				os << " (only referenced compiler-generated functions changed)";
-			else if (opts.show) {
+				os << " (only referenced compiler-generated functions changed)" << endl;
+			else if (i->refs_changed && opts.show) {
+				os << "        Changed referenced symbols:" << endl;
+				for (vector<string>::iterator j = i->changed_symbols.begin();
+				     j != i->changed_symbols.end();
+				     ++j) {
+					os << "            " << *j << endl;
+				}
+			} else if (opts.show) {
 				os << ':' << endl;
 				print_diff(i->diff, os, opts);
+				os << endl;
+			} else {
+				os << endl;
 			}
-			os << endl;
-		     }
+		}
 	}
 
 	if (!changes)
