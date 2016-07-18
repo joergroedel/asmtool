@@ -537,9 +537,12 @@ void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &op
 		for (vector<changed_function>::iterator i = changed_functions.begin();
 		     i != changed_functions.end();
 		     ++i) {
-			os << "    " << i->name << ':' << endl;
-			if (opts.show)
+			os << "    " << i->name;
+			if (opts.show) {
+				os << ':' << endl;
 				print_diff(i->diff, os, opts);
+			}
+			os << endl;
 		     }
 	}
 
