@@ -192,9 +192,9 @@ void check_statements(asm_statement &s1, asm_statement &s2,
 
 			if (symbol_map.find(t2.token) != symbol_map.end()) {
 				if (symbol_map[t2.token] != t1.token) {
-					cout << "WARNING: " << t2.token;
-					cout << " maps to " << symbol_map[t2.token];
-					cout << " and " << t1.token << endl;
+					cerr << "WARNING: " << t2.token;
+					cerr << " maps to " << symbol_map[t2.token];
+					cerr << " and " << t1.token << endl;
 				}
 			} else {
 				symbol_map[t2.token] = t1.token;

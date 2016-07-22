@@ -373,7 +373,7 @@ asm_statement::asm_statement(const std::string &line)
 			type = LABEL;
 			items[0].erase(items[0].end() - 1);
 		} else if (items[0][0] == '.') {
-			cout << "Unknown item: " << items[0] << endl;
+			cerr << "Unknown item: " << items[0] << endl;
 			return;
 		} else {
 			type = INSTRUCTION;

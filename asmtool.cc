@@ -131,7 +131,7 @@ static int do_diff(const char *cmd, int argc, char **argv)
 	}
 
 	if (optind + 2 > argc) {
-		cout << "Two file parameters required" << endl;
+		cerr << "Two file parameters required" << endl;
 		usage_diff(cmd);
 		return 1;
 	}
