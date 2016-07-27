@@ -268,11 +268,8 @@ static bool function_list(string type, const vector<string> &list, ostream &os)
 
 	os << type << " functions:" << endl;
 
-	for (vector<string>::const_iterator it = list.begin();
-	     it != list.end();
-	     it++) {
+	for (auto it = list.begin(); it != list.end(); it++)
 		os << "    " << *it << endl;
-	}
 
 	return true;
 }
@@ -283,9 +280,7 @@ static bool compare_symbol_map(asm_file *file1, asm_file *file2,
 {
 	bool changed = false;
 
-	for (map<string, string>::iterator symbol = symbol_map.begin();
-			symbol != symbol_map.end();
-			++symbol) {
+	for (auto symbol = symbol_map.begin(); symbol != symbol_map.end(); ++symbol) {
 		string sym_old(symbol->second), sym_new(symbol->first);
 		bool c;
 
@@ -475,9 +470,7 @@ void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &op
 	bool changes = false;
 
 	/* Search for new and changed functions */
-	for (map<string, asm_function>::const_iterator it = file2->functions.begin();
-	     it != file2->functions.end();
-	     it++) {
+	for (auto it = file2->functions.begin(); it != file2->functions.end(); it++) {
 		string name = it->first;
 		bool changed, refs_changed = false;
 
@@ -527,9 +520,7 @@ void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &op
 	}
 
 	/* Look for removed functions */
-	for (map<string, asm_function>::const_iterator it = file1->functions.begin();
-	     it != file1->functions.end();
-	     it++) {
+	for (auto it = file1->functions.begin(); it != file1->functions.end(); it++) {
 		string name = it->first;
 
 		if (generated_symbol(name))
@@ -550,16 +541,13 @@ void diff(asm_file *file1, asm_file *file2, ostream &os, struct diff_options &op
 
 		os << "Changed functions:" << endl;
 
-		for (vector<changed_function>::iterator i = changed_functions.begin();
-		     i != changed_functions.end();
-		     ++i) {
+		for (auto i = changed_functions.begin(); i != changed_functions.end(); ++i) {
 			os << "    " << i->name;
 			if (i->refs_changed) {
 				os << " (only referenced compiler-generated functions changed)" << endl;
 				os << "        Changed referenced symbols:" << endl;
-				for (vector<string>::iterator j = i->changed_symbols.begin();
-				     j != i->changed_symbols.end();
-				     ++j) {
+				for (auto j = i->changed_symbols.begin();
+				     j != i->changed_symbols.end(); ++j) {
 					os << "            " << *j << endl;
 				}
 			} else if (opts.show) {

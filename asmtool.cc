@@ -44,9 +44,7 @@ asm_file *load_file(const char *name)
 
 		vector<string> lines = split_trim(";", line);
 
-		for (vector<string>::iterator it = lines.begin();
-		     it != lines.end();
-		     it++)
+		for (auto it = lines.begin(); it != lines.end(); it++)
 			file->add_statement(asm_statement(*it));
 	}
 

@@ -149,9 +149,7 @@ void asm_param::reset()
 
 void asm_param::rename_label(string from, string to)
 {
-	for (vector<asm_token>::iterator it = tokens.begin();
-	     it != tokens.end();
-	     it++) {
+	for (auto it = tokens.begin(); it != tokens.end(); it++) {
 		if (it->type != asm_token::IDENTIFIER)
 			continue;
 		if (it->token != from)
@@ -168,9 +166,7 @@ asm_instruction::asm_instruction(std::string _instruction, std::string _param)
 
 void asm_instruction::rename_label(string from, string to)
 {
-	for (vector<asm_param>::iterator it = params.begin();
-	     it != params.end();
-	     it++)
+	for (auto it = params.begin(); it != params.end(); it++)
 		it->rename_label(from, to);
 }
 
@@ -467,10 +463,7 @@ void asm_function::normalize()
 	int counter = 0;
 
 	/* Create replacements for function-local labels */
-	for (vector<asm_statement>::iterator it = statements.begin();
-	     it != statements.end();
-	     it++)
-	{
+	for (auto it = statements.begin(); it != statements.end(); it++) {
 		ostringstream is;
 		asm_label *label;
 
@@ -485,12 +478,8 @@ void asm_function::normalize()
 	}
 
 	/* Rename labels */
-	for (vector<asm_statement>::iterator it = statements.begin();
-	     it != statements.end();
-	     it++) {
-		for (map<string, string>::iterator sym = symbols.begin();
-		     sym != symbols.end();
-		     sym++)
+	for (auto it = statements.begin();  it != statements.end(); it++) {
+		for (auto sym = symbols.begin(); sym != symbols.end(); sym++)
 			it->rename_label(sym->first, sym->second);
 	}
 }
@@ -554,16 +543,14 @@ void asm_file::analyze()
 
 void asm_file::load_objects()
 {
-	map<string, asm_function>::iterator cur_fn  = functions.end();
-	map<string, asm_object>::iterator   cur_obj = objects.end();
+	auto cur_fn  = functions.end();
+	auto cur_obj = objects.end();
 	stack<asm_section> stack;
 	asm_function *func = 0;
 	asm_object *obj = 0;
 	asm_section section;
 
-	for (vector<asm_statement>::iterator it = statements.begin();
-	     it != statements.end();
-	     it++) {
+	for (auto it = statements.begin(); it != statements.end(); it++) {
 		stmt_type type = it->type;
 		asm_section text, data(".data,\"rw\"");
 
@@ -595,8 +582,8 @@ void asm_file::load_objects()
 		}
 
 		if (type == LABEL) {
-			map<string, asm_function>::iterator f = functions.find(it->obj_label->label);
-			map<string, asm_object>::iterator   o = objects.find(it->obj_label->label);
+			auto f = functions.find(it->obj_label->label);
+			auto o = objects.find(it->obj_label->label);
 
 			if (f != functions.end()) {
 				cur_obj       = objects.end();
@@ -650,9 +637,7 @@ asm_function *asm_file::get_function(string name)
 
 void asm_file::load_object_scopes()
 {
-	for (vector<asm_statement>::iterator it = statements.begin();
-	     it != statements.end();
-	     it++) {
+	for (auto it = statements.begin(); it != statements.end(); it++) {
 		if (it->type != LOCAL && it->type != GLOBAL)
 			continue;
 
@@ -673,9 +658,7 @@ void asm_file::load_object_scopes()
 
 void asm_file::load_object_sizes()
 {
-	for (vector<asm_statement>::iterator it = statements.begin();
-	     it != statements.end();
-	     it++) {
+	for (auto it = statements.begin(); it != statements.end(); it++) {
 		if (it->type != SIZE)
 			continue;
 
@@ -704,7 +687,7 @@ bool asm_file::has_function(std::string name) const
 
 asm_object *asm_file::get_object(string name)
 {
-	map<string, asm_object>::iterator obj = objects.find(name);
+	auto obj = objects.find(name);
 
 	if (obj == objects.end())
 		return NULL;
@@ -719,9 +702,7 @@ bool asm_file::has_object(std::string name) const
 
 void asm_file::dump_statements() const
 {
-	for (vector<asm_statement>::const_iterator it = statements.begin();
-	     it != statements.end();
-	     ++it) {
+	for (auto it = statements.begin(); it != statements.end(); ++it) {
 		cout << __stmt_name[it->type] << " ";
 		for (vector<string>::const_iterator i = it->params.begin();
 		     i != it->params.end();
@@ -734,18 +715,14 @@ void asm_file::dump_statements() const
 void asm_file::dump_functions() const
 {
 	cout << "Functions (" << functions.size() << "):" << endl;
-	for (map<string, asm_function>::const_iterator it = functions.begin();
-	     it != functions.end();
-	     ++it)
+	for (auto it = functions.begin(); it != functions.end(); ++it)
 		cout << "    " << it->first << endl;
 }
 
 void asm_file::dump_objects() const
 {
 	cout << "Objects (" << objects.size() << "):" << endl;
-	for (map<string, asm_object>::const_iterator it = objects.begin();
-	     it != objects.end();
-	     ++it) {
+	for (auto it = objects.begin(); it != objects.end(); ++it) {
 		cout << "    " << it->first << " size=" << it->second.size;
 		cout << " scope=" << scope_name(it->second.scope) << endl;
 	}
