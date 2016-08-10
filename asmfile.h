@@ -27,6 +27,7 @@ enum stmt_type {
 	STRING,
 	ASCII,
 	BYTE,
+	SHORT,
 	WORD,
 	LONG,
 	QUAD,
