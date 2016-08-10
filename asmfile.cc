@@ -486,6 +486,28 @@ void asm_function::normalize()
 	}
 }
 
+asm_function *asm_function::strip_debuginfo() const
+{
+	asm_function *f = new asm_function();
+
+	for (auto it = statements.begin(); it != statements.end(); it++) {
+		if (it->type == LOC || it->type == DOTFILE)
+			continue;
+
+		if (it->type == LABEL) {
+			string label = it->obj_label->label;
+
+			if (label.size() >= 3 && label[0] == '.' &&
+			    label[1] == 'L' && isalpha(label[2]))
+				continue;
+		}
+
+		f->add_statement(*it);
+	}
+
+	return f;
+}
+
 asm_object::asm_object()
 	: size(0), scope(ADHOC)
 {
@@ -634,7 +656,7 @@ asm_function *asm_file::get_function(string name)
 	if (!has_function(name))
 		return 0;
 
-	return new asm_function(functions[name]);
+	return functions[name].strip_debuginfo();
 }
 
 void asm_file::load_object_scopes()

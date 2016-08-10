@@ -176,6 +176,7 @@ struct asm_function {
 
 	asm_function();
 	void add_statement(const asm_statement &stmt);
+	asm_function *strip_debuginfo() const;
 
 	void normalize();
 };
