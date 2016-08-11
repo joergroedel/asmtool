@@ -18,6 +18,8 @@
 #include "helper.h"
 #include "diff.h"
 
+#include "newdata.h"
+
 using namespace std;
 
 asm_file *load_file(const char *name)
@@ -45,8 +47,14 @@ asm_file *load_file(const char *name)
 		vector<string> lines = split_trim(";", line);
 
 		for (auto it = lines.begin(); it != lines.end(); it++) {
-			if (it->size() > 0)
+			if (it->size() > 0) {
 				file->add_statement(asm_statement(*it));
+
+#if 0
+				assembly::asm_statement st = assembly::parse_statement(*it);
+				cout << '[' << *it << "] [" << st.serialize() << ']' << endl;
+#endif
+			}
 		}
 	}
 
