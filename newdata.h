@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 namespace assembly {
 
@@ -127,7 +128,7 @@ namespace assembly {
 	class asm_comm : public asm_statement {
 	};
 
-	asm_statement parse_statement(std::string);
+	std::unique_ptr<asm_statement> parse_statement(std::string);
 
 } // namespace assembly
 

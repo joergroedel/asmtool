@@ -51,8 +51,8 @@ asm_file *load_file(const char *name)
 				file->add_statement(asm_statement(*it));
 
 #if 0
-				assembly::asm_statement st = assembly::parse_statement(*it);
-				cout << '[' << *it << "] [" << st.serialize() << ']' << endl;
+				std::unique_ptr<assembly::asm_statement> st = assembly::parse_statement(*it);
+				cout << '[' << *it << "] [" << st->serialize() << ']' << endl;
 #endif
 			}
 		}

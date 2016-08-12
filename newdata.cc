@@ -208,9 +208,9 @@ namespace assembly {
 		return (c == 'x' || c == 'X' || isxdigit(c));
 	}
 
-	asm_statement parse_statement(std::string stmt)
+	std::unique_ptr<asm_statement> parse_statement(std::string stmt)
 	{
-		asm_statement statement(stmt);
+		std::unique_ptr<asm_statement> statement(new asm_statement(stmt));
 		std::string instr, params;
 
 		{
@@ -238,28 +238,28 @@ namespace assembly {
 		// no match it could be a lable or an instruction
 		for (auto map = stmt_map; map->type != stmt_type::NOSTMT; map++) {
 			if (instr == map->str) {
-				statement.type(map->type);
+				statement->type(map->type);
 				break;
 			}
 		}
 
 		// Now check for instructions and labels, in case we don't know
 		// the type yet
-		if (statement.type() == stmt_type::NOSTMT) {
+		if (statement->type() == stmt_type::NOSTMT) {
 			auto last = instr.rbegin();
 
 			if (*last == ':') {
 				instr.pop_back();
-				statement.type(stmt_type::LABEL);
+				statement->type(stmt_type::LABEL);
 			} else if (instr[0] == '.') {
-				statement.type(stmt_type::UNKNOWN);
+				statement->type(stmt_type::UNKNOWN);
 				return statement;
 			} else {
-				statement.type(stmt_type::INSTRUCTION);
+				statement->type(stmt_type::INSTRUCTION);
 			}
 		}
 
-		statement.set_instr(instr);
+		statement->set_instr(instr);
 
 		// Now parse the params, if any
 		enum token_type type = token_type::UNKNOWN;
@@ -283,7 +283,7 @@ namespace assembly {
 					type      = token_type::UNKNOWN;
 					last_char = 0;
 				} else {
-					// guard against \\"
+					// guard against '\\"'
 					last_char  = last_char != '\\' ? *it : 0;
 					token     += *it;
 				}
@@ -309,7 +309,7 @@ namespace assembly {
 					continue;
 				}
 
-				statement.add_param(param);
+				statement->add_param(param);
 				param.reset();
 
 				break;
@@ -359,7 +359,7 @@ namespace assembly {
 			param.add_token(asm_token(token, type));
 
 		if (param.tokens() > 0)
-			statement.add_param(param);
+			statement->add_param(param);
 
 		return statement;
 	}
