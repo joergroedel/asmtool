@@ -118,9 +118,6 @@ namespace assembly {
 		std::string serialize() const;
 	};
 
-	class asm_instruction : public asm_statement {
-	};
-
 	class asm_type : public asm_statement {
 	};
 
