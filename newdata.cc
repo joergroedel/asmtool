@@ -350,6 +350,58 @@ namespace assembly {
 
 	/////////////////////////////////////////////////////////////////////
 	//
+	// Class asm_comm
+	//
+	/////////////////////////////////////////////////////////////////////
+
+	asm_comm::asm_comm(std::string stmt)
+		: asm_statement(stmt), m_symbol(), m_alignment(0), m_size(0)
+	{
+		m_type = stmt_type::COMM;
+	}
+
+	void asm_comm::analyze()
+	{
+		auto size = m_params.size();
+
+		if (size < 1)
+			return;
+
+		m_params[0].token(0, [&](enum token_type type, std::string token) {
+				if (type == token_type::IDENTIFIER)
+					m_symbol = token;
+				});
+
+		if (size < 2)
+			return;
+
+		m_params[1].token(0, [&](enum token_type type, std::string token) {
+				if (type == token_type::NUMBER) {
+					std::istringstream is(token);
+
+					is >> m_size;
+				}
+				});
+
+		if (size < 3)
+			return;
+
+		m_params[2].token(0, [&](enum token_type type, std::string token) {
+				if (type == token_type::NUMBER) {
+					std::istringstream is(token);
+
+					is >> m_alignment;
+				}
+				});
+	}
+
+	std::string asm_comm::get_symbol() const
+	{
+		return m_symbol;
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	//
 	// Statement parser and helper functions
 	//
 	/////////////////////////////////////////////////////////////////////
@@ -437,6 +489,9 @@ namespace assembly {
 			break;
 		case stmt_type::SECTION:
 			statement = std::unique_ptr<asm_statement>(new asm_section(stmt));
+			break;
+		case stmt_type::COMM:
+			statement = std::unique_ptr<asm_statement>(new asm_comm(stmt));
 			break;
 		default:
 			statement = std::unique_ptr<asm_statement>(new asm_statement(stmt));

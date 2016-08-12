@@ -173,6 +173,17 @@ namespace assembly {
 	};
 
 	class asm_comm : public asm_statement {
+	protected:
+		std::string	m_symbol;
+		uint32_t	m_alignment;
+		uint64_t	m_size;
+
+	public:
+		asm_comm(std::string);
+
+		virtual void analyze();
+
+		std::string get_symbol() const;
 	};
 
 	std::unique_ptr<asm_statement> parse_statement(std::string);
