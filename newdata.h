@@ -75,6 +75,9 @@ namespace assembly {
 	public:
 
 		asm_token(std::string, enum token_type);
+		enum token_type type() const;
+		std::string token() const;
+
 		std::string serialize() const;
 	};
 

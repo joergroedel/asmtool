@@ -88,6 +88,16 @@ namespace assembly {
 		return os.str();
 	}
 
+	enum token_type asm_token::type() const
+	{
+		return m_type;
+	}
+
+	std::string asm_token::token() const
+	{
+		return m_token;
+	}
+
 	/////////////////////////////////////////////////////////////////////
 	//
 	// Class asm_param
