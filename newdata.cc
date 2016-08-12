@@ -305,6 +305,51 @@ namespace assembly {
 
 	/////////////////////////////////////////////////////////////////////
 	//
+	// Class asm_section
+	//
+	/////////////////////////////////////////////////////////////////////
+
+	asm_section::asm_section(std::string stmt)
+		: asm_statement(stmt)
+	{
+		m_type = stmt_type::SECTION;
+	}
+
+	void asm_section::analyze()
+	{
+		auto size = m_params.size();
+
+		if (size < 1)
+			return;
+
+		m_params[0].token(0, [&](enum token_type type, std::string token) {
+				if (type == token_type::IDENTIFIER)
+					m_name = token;
+				});
+
+		if (size < 2)
+			return;
+
+		m_params[1].token(0, [&](enum token_type type, std::string token) {
+				if (type == token_type::STRING)
+					m_flags = token;
+				});
+
+		m_executable = (m_flags.find_first_of("x") != std::string::npos);
+	}
+
+	std::string asm_section::get_name() const
+	{
+		return m_name;
+	}
+
+	bool asm_section::executable() const
+	{
+		return m_executable;
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	//
 	// Statement parser and helper functions
 	//
 	/////////////////////////////////////////////////////////////////////
@@ -389,6 +434,9 @@ namespace assembly {
 			break;
 		case stmt_type::SIZE:
 			statement = std::unique_ptr<asm_statement>(new asm_size(stmt));
+			break;
+		case stmt_type::SECTION:
+			statement = std::unique_ptr<asm_statement>(new asm_section(stmt));
 			break;
 		default:
 			statement = std::unique_ptr<asm_statement>(new asm_statement(stmt));

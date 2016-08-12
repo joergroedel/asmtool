@@ -158,6 +158,18 @@ namespace assembly {
 	};
 
 	class asm_section : public asm_statement {
+	protected:
+		std::string m_name;
+		std::string m_flags;
+		bool m_executable;
+
+	public:
+		asm_section(std::string);
+
+		virtual void analyze();
+
+		std::string get_name() const;
+		bool executable() const;
 	};
 
 	class asm_comm : public asm_statement {
