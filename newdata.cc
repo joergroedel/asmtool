@@ -277,6 +277,34 @@ namespace assembly {
 
 	/////////////////////////////////////////////////////////////////////
 	//
+	// Class asm_size
+	//
+	/////////////////////////////////////////////////////////////////////
+
+	asm_size::asm_size(std::string stmt)
+		: asm_statement(stmt)
+	{
+		m_type = stmt_type::SIZE;
+	}
+
+	void asm_size::analyze()
+	{
+		if (m_params.size() < 2)
+			return;
+
+		m_params[0].token(0, [&](enum token_type type, std::string token) {
+				if (type == token_type::IDENTIFIER)
+					m_symbol = token;
+				});
+	}
+
+	std::string asm_size::get_symbol() const
+	{
+		return m_symbol;
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	//
 	// Statement parser and helper functions
 	//
 	/////////////////////////////////////////////////////////////////////
@@ -358,6 +386,9 @@ namespace assembly {
 			break;
 		case stmt_type::LABEL:
 			statement = std::unique_ptr<asm_statement>(new asm_label(stmt));
+			break;
+		case stmt_type::SIZE:
+			statement = std::unique_ptr<asm_statement>(new asm_size(stmt));
 			break;
 		default:
 			statement = std::unique_ptr<asm_statement>(new asm_statement(stmt));

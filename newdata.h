@@ -146,6 +146,15 @@ namespace assembly {
 	};
 
 	class asm_size : public asm_statement {
+	protected:
+		std::string m_symbol;
+
+	public:
+		asm_size(std::string);
+
+		virtual void analyze();
+
+		std::string get_symbol() const;
 	};
 
 	class asm_section : public asm_statement {
