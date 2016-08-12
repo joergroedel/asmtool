@@ -97,6 +97,7 @@ namespace assembly {
 	};
 
 	class asm_statement {
+	protected:
 		std::string		m_stmt;
 		std::string		m_instr;
 		enum stmt_type		m_type;
