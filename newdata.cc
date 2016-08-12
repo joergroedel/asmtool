@@ -207,6 +207,51 @@ namespace assembly {
 
 	/////////////////////////////////////////////////////////////////////
 	//
+	// Class asm_type
+	//
+	/////////////////////////////////////////////////////////////////////
+
+	asm_type::asm_type(std::string stmt)
+		: asm_statement(std::move(stmt))
+	{
+		m_type = stmt_type::TYPE;
+	}
+
+
+	enum symbol_type asm_type::get_type() const
+	{
+		return m_stype;
+	}
+
+	std::string asm_type::get_symbol() const
+	{
+		return m_symbol;
+	}
+
+	void asm_type::analyze()
+	{
+		if (m_params.size() < 2)
+			return;
+
+		m_params[0].token(0, [&](enum token_type type, std::string token) {
+				if (type == token_type::IDENTIFIER)
+					m_symbol = token;
+				});
+
+		m_params[1].token(0, [&](enum token_type type, std::string token) {
+				if (type == token_type::TYPEFLAG) {
+					if (token == "@function")
+						m_stype = symbol_type::FUNCTION;
+					else if (token == "@object")
+						m_stype = symbol_type::OBJECT;
+					else
+						m_stype = symbol_type::UNKNOWN;
+				}
+				});
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	//
 	// Statement parser and helper functions
 	//
 	/////////////////////////////////////////////////////////////////////

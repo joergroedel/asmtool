@@ -67,6 +67,12 @@ namespace assembly {
 		TYPEFLAG,
 	};
 
+	enum class symbol_type {
+		FUNCTION,
+		OBJECT,
+		UNKNOWN,
+	};
+
 	class asm_token {
 	protected:
 		std::string	m_token;
@@ -119,6 +125,15 @@ namespace assembly {
 	};
 
 	class asm_type : public asm_statement {
+	protected:
+		enum symbol_type	m_stype;
+		std::string		m_symbol;
+
+	public:
+		asm_type(std::string);
+		enum symbol_type get_type() const;
+		std::string get_symbol() const;
+		virtual void analyze();
 	};
 
 	class asm_label : public asm_statement {
