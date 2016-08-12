@@ -120,6 +120,15 @@ namespace assembly {
 		return m_tokens.size();
 	}
 
+	void asm_param::token(asm_param::token_t::size_type idx,
+			      std::function<void(enum token_type, std::string)> handler) const
+	{
+		if (m_tokens.size() <= idx)
+			return;
+
+		handler(m_tokens[idx].type(), m_tokens[idx].token());
+	}
+
 	std::string asm_param::serialize() const
 	{
 		std::ostringstream os;

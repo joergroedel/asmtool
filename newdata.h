@@ -83,13 +83,16 @@ namespace assembly {
 
 	class asm_param {
 	protected:
-		std::vector<asm_token> m_tokens;
+		using token_t = std::vector<asm_token>;
+		token_t m_tokens;
 
 	public:
 		template<typename T>
 		void add_token(T&&);
 		void reset();
 		size_t tokens() const;
+		void token(token_t::size_type,
+			   std::function<void(enum token_type, std::string)>) const;
 		std::string serialize() const;
 	};
 
