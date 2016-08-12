@@ -137,6 +137,12 @@ namespace assembly {
 	};
 
 	class asm_label : public asm_statement {
+	public:
+		asm_label(std::string);
+
+		virtual void rename_label(std::string, std::string);
+
+		std::string get_label() const;
 	};
 
 	class asm_size : public asm_statement {

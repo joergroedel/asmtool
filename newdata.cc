@@ -252,6 +252,31 @@ namespace assembly {
 
 	/////////////////////////////////////////////////////////////////////
 	//
+	// Class asm_label
+	//
+	/////////////////////////////////////////////////////////////////////
+
+	asm_label::asm_label(std::string stmt)
+		: asm_statement(stmt)
+	{
+		m_type = stmt_type::LABEL;
+	}
+
+	void asm_label::rename_label(std::string from, std::string to)
+	{
+		asm_statement::rename_label(from, to);
+
+		if (m_instr == from)
+			m_instr = to;
+	}
+
+	std::string asm_label::get_label() const
+	{
+		return m_instr;
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	//
 	// Statement parser and helper functions
 	//
 	/////////////////////////////////////////////////////////////////////
@@ -278,7 +303,8 @@ namespace assembly {
 
 	std::unique_ptr<asm_statement> parse_statement(std::string stmt)
 	{
-		std::unique_ptr<asm_statement> statement(new asm_statement(stmt));
+		std::unique_ptr<asm_statement> statement;
+		enum stmt_type stmt_t = stmt_type::NOSTMT;
 		std::string instr, params;
 
 		{
@@ -306,27 +332,39 @@ namespace assembly {
 		// no match it could be a lable or an instruction
 		for (auto map = stmt_map; map->type != stmt_type::NOSTMT; map++) {
 			if (instr == map->str) {
-				statement->type(map->type);
+				stmt_t = map->type;
 				break;
 			}
 		}
 
 		// Now check for instructions and labels, in case we don't know
 		// the type yet
-		if (statement->type() == stmt_type::NOSTMT) {
+		if (stmt_t == stmt_type::NOSTMT) {
 			auto last = instr.rbegin();
 
 			if (*last == ':') {
 				instr.pop_back();
-				statement->type(stmt_type::LABEL);
+				stmt_t = stmt_type::LABEL;
 			} else if (instr[0] == '.') {
-				statement->type(stmt_type::UNKNOWN);
-				return statement;
+				stmt_t = stmt_type::UNKNOWN;
 			} else {
-				statement->type(stmt_type::INSTRUCTION);
+				stmt_t = stmt_type::INSTRUCTION;
 			}
 		}
 
+		switch (stmt_t) {
+		case stmt_type::TYPE:
+			statement = std::unique_ptr<asm_statement>(new asm_type(stmt));
+			break;
+		case stmt_type::LABEL:
+			statement = std::unique_ptr<asm_statement>(new asm_label(stmt));
+			break;
+		default:
+			statement = std::unique_ptr<asm_statement>(new asm_statement(stmt));
+			break;
+		}
+
+		statement->type(stmt_t);
 		statement->set_instr(instr);
 
 		// Now parse the params, if any
@@ -428,6 +466,8 @@ namespace assembly {
 
 		if (param.tokens() > 0)
 			statement->add_param(param);
+
+		statement->analyze();
 
 		return statement;
 	}
