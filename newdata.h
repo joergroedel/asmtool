@@ -99,6 +99,7 @@ namespace assembly {
 	public:
 		asm_statement(std::string);
 		virtual void rename_label(std::string, std::string);
+		virtual void analyze();
 
 		void type(enum stmt_type);
 		enum stmt_type type() const;

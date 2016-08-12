@@ -140,6 +140,10 @@ namespace assembly {
 		// TODO
 	}
 
+	void asm_statement::analyze()
+	{
+	}
+
 	void asm_statement::type(enum stmt_type t)
 	{
 		m_type = t;
