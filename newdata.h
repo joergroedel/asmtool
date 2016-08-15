@@ -88,7 +88,9 @@ namespace assembly {
 
 		asm_token(std::string, enum token_type);
 		enum token_type type() const;
+
 		std::string token() const;
+		void set(std::string);
 
 		std::string serialize() const;
 	};
@@ -96,6 +98,7 @@ namespace assembly {
 	class asm_param {
 	protected:
 		using token_t = std::vector<asm_token>;
+		using token_handler = std::function<void(asm_token&)>;
 		token_t m_tokens;
 
 	public:
@@ -105,12 +108,14 @@ namespace assembly {
 		size_t tokens() const;
 		void token(token_t::size_type,
 			   std::function<void(enum token_type, std::string)>) const;
+		void for_each_token(token_handler);
 		std::string serialize() const;
 	};
 
 	class asm_statement {
 	protected:
 		using param_type = std::vector<asm_param>;
+		using param_handler = std::function<void(asm_param&)>;
 
 		std::string		m_stmt;
 		std::string		m_instr;
@@ -129,7 +134,8 @@ namespace assembly {
 
 		template<typename T> void add_param(T&&);
 
-		void param(param_type::size_type, std::function<void(asm_param&)>);
+		void param(param_type::size_type, param_handler);
+		void for_each_param(param_handler);
 
 		std::string serialize() const;
 	};
@@ -141,6 +147,7 @@ namespace assembly {
 
 	public:
 		asm_type(std::string);
+		virtual void rename_label(std::string, std::string);
 		enum symbol_type get_type() const;
 		std::string get_symbol() const;
 		virtual void analyze();
@@ -161,6 +168,7 @@ namespace assembly {
 
 	public:
 		asm_size(std::string);
+		virtual void rename_label(std::string, std::string);
 
 		virtual void analyze();
 
@@ -175,6 +183,7 @@ namespace assembly {
 
 	public:
 		asm_section(std::string);
+		virtual void rename_label(std::string, std::string);
 
 		virtual void analyze();
 
@@ -190,6 +199,7 @@ namespace assembly {
 
 	public:
 		asm_comm(std::string);
+		virtual void rename_label(std::string, std::string);
 
 		virtual void analyze();
 

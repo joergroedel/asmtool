@@ -102,6 +102,11 @@ namespace assembly {
 		return m_token;
 	}
 
+	void asm_token::set(std::string token)
+	{
+		m_token = token;
+	}
+
 	/////////////////////////////////////////////////////////////////////
 	//
 	// Class asm_param
@@ -133,6 +138,11 @@ namespace assembly {
 		handler(m_tokens[idx].type(), m_tokens[idx].token());
 	}
 
+	void asm_param::for_each_token(token_handler handler)
+	{
+		for_each(m_tokens.begin(), m_tokens.end(), handler);
+	}
+
 	std::string asm_param::serialize() const
 	{
 		std::ostringstream os;
@@ -160,7 +170,14 @@ namespace assembly {
 
 	void asm_statement::rename_label(std::string from, std::string to)
 	{
-		// TODO
+		for_each_param([&from, &to] (asm_param &p) {
+			p.for_each_token([&from, &to] (asm_token &t) {
+				if (t.type() != token_type::IDENTIFIER)
+					return;
+				if (t.token() == from)
+					t.set(to);
+			});
+		});
 	}
 
 	void asm_statement::analyze()
@@ -189,12 +206,17 @@ namespace assembly {
 	}
 
 	void asm_statement::param(param_type::size_type idx,
-				  std::function<void(asm_param&)> p)
+				  param_handler p)
 	{
 		if (m_params.size() <= idx)
 			return;
 
 		p(m_params[idx]);
+	}
+
+	void asm_statement::for_each_param(param_handler handler)
+	{
+		std::for_each(m_params.begin(), m_params.end(), handler);
 	}
 
 	std::string asm_statement::serialize() const
@@ -230,6 +252,13 @@ namespace assembly {
 		m_type = stmt_type::TYPE;
 	}
 
+	void asm_type::rename_label(std::string from, std::string to)
+	{
+		asm_statement::rename_label(from, to);
+
+		if (m_symbol == from)
+			m_symbol = to;
+	}
 
 	enum symbol_type asm_type::get_type() const
 	{
@@ -300,6 +329,14 @@ namespace assembly {
 		m_type = stmt_type::SIZE;
 	}
 
+	void asm_size::rename_label(std::string from, std::string to)
+	{
+		asm_statement::rename_label(from, to);
+
+		if (m_symbol == from)
+			m_symbol = to;
+	}
+
 	void asm_size::analyze()
 	{
 		if (m_params.size() < 2)
@@ -326,6 +363,11 @@ namespace assembly {
 		: asm_statement(stmt)
 	{
 		m_type = stmt_type::SECTION;
+	}
+
+	void asm_section::rename_label(std::string from, std::string to)
+	{
+		// Do nothing - we don't rename section names
 	}
 
 	void asm_section::analyze()
@@ -371,6 +413,14 @@ namespace assembly {
 		: asm_statement(stmt), m_symbol(), m_alignment(0), m_size(0)
 	{
 		m_type = stmt_type::COMM;
+	}
+
+	void asm_comm::rename_label(std::string from, std::string to)
+	{
+		asm_statement::rename_label(from, to);
+
+		if (m_symbol == from)
+			m_symbol = to;
 	}
 
 	void asm_comm::analyze()
