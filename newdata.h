@@ -110,10 +110,12 @@ namespace assembly {
 
 	class asm_statement {
 	protected:
+		using param_type = std::vector<asm_param>;
+
 		std::string		m_stmt;
 		std::string		m_instr;
 		enum stmt_type		m_type;
-		std::vector<asm_param>	m_params;
+		param_type		m_params;
 
 	public:
 		asm_statement(std::string);
@@ -126,6 +128,8 @@ namespace assembly {
 		void set_instr(std::string);
 
 		template<typename T> void add_param(T&&);
+
+		void param(param_type::size_type, std::function<void(asm_param&)>);
 
 		std::string serialize() const;
 	};
@@ -193,8 +197,9 @@ namespace assembly {
 	};
 
 	struct asm_symbol {
-		enum symbol_type  m_type;
-		enum symbol_scope m_scope;
+		size_t			m_idx;
+		enum symbol_type	m_type;
+		enum symbol_scope	m_scope;
 
 		asm_symbol();
 	};

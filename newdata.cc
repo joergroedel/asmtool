@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <vector>
@@ -185,6 +186,15 @@ namespace assembly {
 	void asm_statement::add_param(T&& p)
 	{
 		m_params.push_back(std::forward<T>(p));
+	}
+
+	void asm_statement::param(param_type::size_type idx,
+				  std::function<void(asm_param&)> p)
+	{
+		if (m_params.size() <= idx)
+			return;
+
+		p(m_params[idx]);
 	}
 
 	std::string asm_statement::serialize() const
@@ -410,7 +420,7 @@ namespace assembly {
 	/////////////////////////////////////////////////////////////////////
 
 	asm_symbol::asm_symbol()
-		: m_type(symbol_type::UNKNOWN), m_scope(symbol_scope::UNKNOWN)
+		: m_idx(0), m_type(symbol_type::UNKNOWN), m_scope(symbol_scope::UNKNOWN)
 	{
 	}
 
@@ -444,6 +454,34 @@ namespace assembly {
 				std::unique_ptr<asm_statement> stmt = parse_statement(*it);
 				if (stmt == nullptr)
 					continue;
+
+				if (stmt->type() == stmt_type::LABEL) {
+					asm_label *label = dynamic_cast<asm_label*>(stmt.get());
+					std::string name = label->get_label();
+
+					if (!(name.size() >= 2 && name.substr(0,2) == ".L"))
+						m_symbols[name].m_idx = m_statements.size();
+
+				} else if (stmt->type() == stmt_type::TYPE) {
+					asm_type *type = dynamic_cast<asm_type*>(stmt.get());
+
+					m_symbols[type->get_symbol()].m_type = type->get_type();
+				} else if (stmt->type() == stmt_type::LOCAL ||
+					   stmt->type() == stmt_type::GLOBAL) {
+					std::string symbol;
+
+					stmt->param(0, [&symbol](asm_param& p) {
+						p.token(0, [&symbol](enum token_type t, std::string s) {
+								if (t == token_type::IDENTIFIER)
+									symbol = s;
+							});
+						});
+
+					if (symbol != "")
+						m_symbols[symbol].m_scope = stmt->type() == stmt_type::LOCAL ?
+										symbol_scope::LOCAL :
+										symbol_scope::GLOBAL;
+				}
 
 				m_statements.push_back(std::move(stmt));
 			}
