@@ -149,10 +149,10 @@ namespace assembly {
 		int count = 0;
 
 		for_each(m_tokens.begin(), m_tokens.end(), [&](const asm_token& t) {
-				if (count++)
-					os << ' ';
-				os << t.serialize();
-				});
+			if (count++)
+				os << ' ';
+			os << t.serialize();
+		});
 
 		return os.str();
 	}
@@ -232,10 +232,10 @@ namespace assembly {
 			os << ' ';
 
 		for_each (m_params.begin(), m_params.end(), [&](const asm_param& p) {
-				if (count++)
-					os << ',';
-				os << p.serialize();
-				});
+			if (count++)
+				os << ',';
+			os << p.serialize();
+		});
 
 		return os.str();
 	}
@@ -276,20 +276,20 @@ namespace assembly {
 			return;
 
 		m_params[0].token(0, [&](enum token_type type, std::string token) {
-				if (type == token_type::IDENTIFIER)
-					m_symbol = token;
-				});
+			if (type == token_type::IDENTIFIER)
+				m_symbol = token;
+		});
 
 		m_params[1].token(0, [&](enum token_type type, std::string token) {
-				if (type == token_type::TYPEFLAG) {
-					if (token == "@function")
-						m_stype = symbol_type::FUNCTION;
-					else if (token == "@object")
-						m_stype = symbol_type::OBJECT;
-					else
-						m_stype = symbol_type::UNKNOWN;
-				}
-				});
+			if (type == token_type::TYPEFLAG) {
+				if (token == "@function")
+					m_stype = symbol_type::FUNCTION;
+				else if (token == "@object")
+					m_stype = symbol_type::OBJECT;
+				else
+					m_stype = symbol_type::UNKNOWN;
+			}
+		});
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -343,9 +343,9 @@ namespace assembly {
 			return;
 
 		m_params[0].token(0, [&](enum token_type type, std::string token) {
-				if (type == token_type::IDENTIFIER)
-					m_symbol = token;
-				});
+			if (type == token_type::IDENTIFIER)
+				m_symbol = token;
+		});
 	}
 
 	std::string asm_size::get_symbol() const
@@ -378,17 +378,17 @@ namespace assembly {
 			return;
 
 		m_params[0].token(0, [&](enum token_type type, std::string token) {
-				if (type == token_type::IDENTIFIER)
-					m_name = token;
-				});
+			if (type == token_type::IDENTIFIER)
+				m_name = token;
+		});
 
 		if (size < 2)
 			return;
 
 		m_params[1].token(0, [&](enum token_type type, std::string token) {
-				if (type == token_type::STRING)
-					m_flags = token;
-				});
+			if (type == token_type::STRING)
+				m_flags = token;
+		});
 
 		m_executable = (m_flags.find_first_of("x") != std::string::npos);
 	}
@@ -431,31 +431,31 @@ namespace assembly {
 			return;
 
 		m_params[0].token(0, [&](enum token_type type, std::string token) {
-				if (type == token_type::IDENTIFIER)
-					m_symbol = token;
-				});
+			if (type == token_type::IDENTIFIER)
+				m_symbol = token;
+		});
 
 		if (size < 2)
 			return;
 
 		m_params[1].token(0, [&](enum token_type type, std::string token) {
-				if (type == token_type::NUMBER) {
-					std::istringstream is(token);
+			if (type == token_type::NUMBER) {
+				std::istringstream is(token);
 
-					is >> m_size;
-				}
-				});
+				is >> m_size;
+			}
+		});
 
 		if (size < 3)
 			return;
 
 		m_params[2].token(0, [&](enum token_type type, std::string token) {
-				if (type == token_type::NUMBER) {
-					std::istringstream is(token);
+			if (type == token_type::NUMBER) {
+				std::istringstream is(token);
 
-					is >> m_alignment;
-				}
-				});
+				is >> m_alignment;
+			}
+		});
 	}
 
 	std::string asm_comm::get_symbol() const
@@ -521,10 +521,10 @@ namespace assembly {
 
 					stmt->param(0, [&symbol](asm_param& p) {
 						p.token(0, [&symbol](enum token_type t, std::string s) {
-								if (t == token_type::IDENTIFIER)
-									symbol = s;
-							});
+							if (t == token_type::IDENTIFIER)
+								symbol = s;
 						});
+					});
 
 					if (symbol != "")
 						m_symbols[symbol].m_scope = stmt->type() == stmt_type::LOCAL ?
