@@ -1,5 +1,8 @@
 #include <algorithm>
 #include <sstream>
+#include <fstream>
+#include <vector>
+#include <map>
 
 #include <ctype.h>
 
@@ -398,6 +401,53 @@ namespace assembly {
 	std::string asm_comm::get_symbol() const
 	{
 		return m_symbol;
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	//
+	// Struct asm_symbol
+	//
+	/////////////////////////////////////////////////////////////////////
+
+	asm_symbol::asm_symbol()
+		: m_type(symbol_type::UNKNOWN), m_scope(symbol_scope::UNKNOWN)
+	{
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	//
+	// Class asm_file
+	//
+	/////////////////////////////////////////////////////////////////////
+
+	void asm_file::load()
+	{
+		std::ifstream in(m_filename.c_str());
+
+		if (!in.is_open())
+			throw std::runtime_error(std::string("Can't open input file ") + m_filename);
+
+		while (!in.eof()) {
+			std::string line;
+
+			std::getline(in, line);
+
+			line = trim(strip_comment(line));
+
+			// TODO: Check if split_trim ignores ';' in strings
+			std::vector<std::string> stmts = split_trim(";", line);
+
+			for (auto it = stmts.begin(), end = stmts.end(); it != end; ++it) {
+				if (*it == "")
+					continue;
+
+				std::unique_ptr<asm_statement> stmt = parse_statement(*it);
+				if (stmt == nullptr)
+					continue;
+
+				m_statements.push_back(std::move(stmt));
+			}
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////

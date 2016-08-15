@@ -73,6 +73,12 @@ namespace assembly {
 		UNKNOWN,
 	};
 
+	enum class symbol_scope {
+		UNKNOWN,
+		LOCAL,
+		GLOBAL,
+	};
+
 	class asm_token {
 	protected:
 		std::string	m_token;
@@ -184,6 +190,26 @@ namespace assembly {
 		virtual void analyze();
 
 		std::string get_symbol() const;
+	};
+
+	struct asm_symbol {
+		enum symbol_type  m_type;
+		enum symbol_scope m_scope;
+
+		asm_symbol();
+	};
+
+	class asm_file {
+		std::vector<std::unique_ptr<asm_statement>>	m_statements;
+		std::map<std::string, asm_symbol>		m_symbols;
+		std::string					m_filename;
+
+	public:
+		template<typename T> inline asm_file(T&& fn)
+			: m_filename(std::forward<T>(fn))
+		{}
+
+		void load();
 	};
 
 	std::unique_ptr<asm_statement> parse_statement(std::string);

@@ -27,6 +27,13 @@ asm_file *load_file(const char *name)
 	ifstream in(name);
 	asm_file *file;
 
+#if 0
+	{
+		assembly::asm_file f(name);
+		f.load();
+	}
+#endif
+
 	if (!in.is_open()) {
 		cerr << "File not open: " << name << endl;
 		return 0;
