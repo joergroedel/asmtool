@@ -444,7 +444,6 @@ namespace assembly {
 
 			line = trim(strip_comment(line));
 
-			// TODO: Check if split_trim ignores ';' in strings
 			std::vector<std::string> stmts = split_trim(";", line);
 
 			for (auto it = stmts.begin(), end = stmts.end(); it != end; ++it) {
