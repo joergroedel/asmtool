@@ -28,7 +28,7 @@ asm_file *load_file(const char *name)
 	ifstream in(name);
 	asm_file *file;
 
-#if 0
+#if 1
 	{
 		assembly::asm_file f(name);
 		f.load();
@@ -54,7 +54,8 @@ asm_file *load_file(const char *name)
 				cout << left;
 				cout << "Symbol " << setw(40) << s;
 				cout << "Scope " << setw(20) << scope;
-				cout << "Type " << type << endl;
+				cout << "Type " << setw(10) << type;
+				cout << "Idx" << info.m_idx << endl;
 		});
 
 	}

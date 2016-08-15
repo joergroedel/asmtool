@@ -79,6 +79,12 @@ namespace assembly {
 		GLOBAL,
 	};
 
+	// Used as a bitfield
+	enum class func_flags {
+		NORMALIZE	= 1,
+		STRIP_DEBUG	= 2,
+	};
+
 	class asm_token {
 	protected:
 		std::string	m_token;
@@ -214,6 +220,22 @@ namespace assembly {
 		asm_symbol();
 	};
 
+	class asm_function {
+	protected:
+		std::vector<std::unique_ptr<asm_statement>>	m_statements;
+		std::string					m_name;
+
+	public:
+		asm_function(std::string);
+
+		inline void add_statement(const asm_statement& stmt)
+		{
+			// TODO: Make a type-safe copy
+			std::unique_ptr<asm_statement> copy(new asm_statement(stmt));
+			m_statements.push_back(std::move(copy));
+		}
+	};
+
 	class asm_file {
 		std::vector<std::unique_ptr<asm_statement>>	m_statements;
 		std::map<std::string, asm_symbol>		m_symbols;
@@ -227,6 +249,9 @@ namespace assembly {
 		void load();
 
 		void for_each_symbol(std::function<void(std::string, asm_symbol)>);
+
+		bool has_function(std::string) const;
+		std::unique_ptr<asm_function> get_function(std::string, enum func_flags) const;
 	};
 
 	std::unique_ptr<asm_statement> parse_statement(std::string);

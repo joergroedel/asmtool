@@ -476,6 +476,17 @@ namespace assembly {
 
 	/////////////////////////////////////////////////////////////////////
 	//
+	// Class asm_function
+	//
+	/////////////////////////////////////////////////////////////////////
+
+	asm_function::asm_function(std::string name)
+		: m_name(name)
+	{
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	//
 	// Class asm_file
 	//
 	/////////////////////////////////////////////////////////////////////
@@ -541,6 +552,56 @@ namespace assembly {
 	{
 		for (auto it = m_symbols.begin(), end = m_symbols.end(); it != end; ++it)
 			handler(it->first, it->second);
+	}
+
+	bool asm_file::has_function(std::string symbol) const
+	{
+		auto it = m_symbols.find(symbol);
+		if (it == m_symbols.end())
+			return false;
+
+		return (it->second.m_type == symbol_type::FUNCTION);
+	}
+
+	std::unique_ptr<asm_function> asm_file::get_function(std::string name, enum func_flags flags) const
+	{
+		std::unique_ptr<asm_function> fn(nullptr);
+
+		if (!has_function(name))
+			return fn;
+
+		fn = std::unique_ptr<asm_function>(new asm_function(name));
+
+		auto it_sym = m_symbols.find(name);
+		auto it     = m_statements.begin() + it_sym->second.m_idx + 1;
+
+		for (auto end = m_statements.end(); it != end; ++it) {
+			if ((*it)->type() == stmt_type::SIZE) {
+				asm_size *size = dynamic_cast<asm_size*>(it->get());
+				if (size->get_symbol() == name)
+					break;
+			}
+
+			if (flags == func_flags::STRIP_DEBUG) {
+				if ((*it)->type() == stmt_type::DOTFILE)
+					continue;
+				if ((*it)->type() == stmt_type::LOC)
+					continue;
+				if ((*it)->type() == stmt_type::LABEL) {
+					asm_label *label = dynamic_cast<asm_label*>(it->get());
+					std::string name = label->get_label();
+
+					if (name.size() >= 3 && name.substr(0, 2) == ".L" && isalpha(name[2]))
+						continue;
+				}
+			}
+
+			fn->add_statement(*(*it));
+		}
+
+		// TODO: Implement normalize flag handling
+
+		return fn;
 	}
 
 	/////////////////////////////////////////////////////////////////////
