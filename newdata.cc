@@ -488,6 +488,12 @@ namespace assembly {
 		}
 	}
 
+	void asm_file::for_each_symbol(std::function<void(std::string, asm_symbol)> handler)
+	{
+		for (auto it = m_symbols.begin(), end = m_symbols.end(); it != end; ++it)
+			handler(it->first, it->second);
+	}
+
 	/////////////////////////////////////////////////////////////////////
 	//
 	// Statement parser and helper functions

@@ -215,6 +215,8 @@ namespace assembly {
 		{}
 
 		void load();
+
+		void for_each_symbol(std::function<void(std::string, asm_symbol)>);
 	};
 
 	std::unique_ptr<asm_statement> parse_statement(std::string);

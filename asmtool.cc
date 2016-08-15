@@ -7,6 +7,7 @@
  */
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <cstdlib>
 #include <string>
@@ -27,10 +28,34 @@ asm_file *load_file(const char *name)
 	ifstream in(name);
 	asm_file *file;
 
-#if 1
+#if 0
 	{
 		assembly::asm_file f(name);
 		f.load();
+
+		f.for_each_symbol([](string s, assembly::asm_symbol info) {
+				string scope;
+				string type;
+
+				if (info.m_scope == assembly::symbol_scope::LOCAL)
+					scope = "Local";
+				else if (info.m_scope == assembly::symbol_scope::GLOBAL)
+					scope = "Global";
+				else
+					scope = "Unknown";
+
+				if (info.m_type == assembly::symbol_type::FUNCTION)
+					type = "Function";
+				else if (info.m_type == assembly::symbol_type::OBJECT)
+					type = "Object";
+				else
+					type = "Unknown";
+
+				cout << left;
+				cout << "Symbol " << setw(40) << s;
+				cout << "Scope " << setw(20) << scope;
+				cout << "Type " << type << endl;
+		});
 
 	}
 #endif
