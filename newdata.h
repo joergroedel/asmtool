@@ -148,6 +148,9 @@ namespace assembly {
 		virtual void rename_label(std::string, std::string);
 		virtual void analyze();
 
+		bool operator==(const asm_statement&) const;
+		bool operator!=(const asm_statement&) const;
+
 		void type(enum stmt_type);
 		enum stmt_type type() const;
 

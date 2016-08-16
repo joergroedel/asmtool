@@ -189,6 +189,52 @@ namespace assembly {
 	{
 	}
 
+	bool asm_statement::operator==(const asm_statement& stmt) const
+	{
+		if (m_type != stmt.m_type   ||
+		    m_instr != stmt.m_instr ||
+		    m_params.size() != stmt.m_params.size())
+			return false;
+
+		auto size = m_params.size();
+		auto type = m_type;
+		bool ret = true;
+
+		for (size_t idx = 0; idx < size; ++idx) {
+			auto &p1 = m_params[idx];
+			auto &p2 = stmt.m_params[idx];
+
+			if (p1.tokens() != p2.tokens())
+				return false;
+
+			for (size_t jdx = 0; jdx < p1.tokens(); ++jdx) {
+				p1.token(jdx, [&jdx, &p2, &type, &ret](enum token_type t1, std::string s1) {
+					p2.token(jdx, [&t1, &s1, &type, &ret](enum token_type t2, std::string s2) {
+						if (t1 != t2) {
+							ret = false;
+							return;
+						}
+
+						if ((type != stmt_type::INSTRUCTION) ||
+						    (t1 != token_type::IDENTIFIER)   ||
+						    ((s1[0] == s2[0]) && (s1[0] != '.')))
+							ret = (s1 == s2);
+					});
+				});
+
+				if (!ret)
+					break;
+			}
+		}
+
+		return ret;
+	}
+
+	bool asm_statement::operator!=(const asm_statement& stmt) const
+	{
+		return !operator==(stmt);
+	}
+
 	void asm_statement::type(enum stmt_type t)
 	{
 		m_type = t;
