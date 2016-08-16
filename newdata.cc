@@ -587,7 +587,7 @@ namespace assembly {
 					break;
 			}
 
-			if (flags == func_flags::STRIP_DEBUG) {
+			if (flags & STRIP_DEBUG) {
 				if ((*it)->type() == stmt_type::DOTFILE)
 					continue;
 				if ((*it)->type() == stmt_type::LOC)

@@ -80,7 +80,7 @@ namespace assembly {
 	};
 
 	// Used as a bitfield
-	enum class func_flags {
+	enum func_flags {
 		NORMALIZE	= 1,
 		STRIP_DEBUG	= 2,
 	};
