@@ -80,10 +80,25 @@ namespace assembly {
 	};
 
 	// Used as a bitfield
-	enum func_flags {
+	enum class func_flags {
+		NONE		= 0,
 		NORMALIZE	= 1,
 		STRIP_DEBUG	= 2,
 	};
+
+	constexpr enum func_flags operator|(const enum func_flags f1,
+					    const enum func_flags f2)
+	{
+		return static_cast<enum func_flags>(
+				static_cast<int>(f1) | static_cast<int>(f2));
+	}
+
+	constexpr enum func_flags operator&(const enum func_flags f1,
+					    const enum func_flags f2)
+	{
+		return static_cast<enum func_flags>(
+				static_cast<int>(f1) & static_cast<int>(f2));
+	}
 
 	class asm_token {
 	protected:

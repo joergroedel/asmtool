@@ -63,6 +63,11 @@ namespace assembly {
 		{ .str = 0,				.type = stmt_type::NOSTMT		},
 	};
 
+	template<typename T> bool __ff(T f)
+	{
+		return (static_cast<int>(f) != 0);
+	}
+
 	/////////////////////////////////////////////////////////////////////
 	//
 	// Class asm_token
@@ -593,7 +598,7 @@ namespace assembly {
 					break;
 			}
 
-			if (flags & STRIP_DEBUG) {
+			if (__ff(flags & func_flags::STRIP_DEBUG)) {
 				if ((*it)->type() == stmt_type::DOTFILE)
 					continue;
 				if ((*it)->type() == stmt_type::LOC)
@@ -610,7 +615,7 @@ namespace assembly {
 			fn->add_statement(*it);
 		}
 
-		if (flags & NORMALIZE) {
+		if (__ff(flags & func_flags::NORMALIZE)) {
 			std::map<std::string, std::string> symbols;
 			int counter = 0;
 
