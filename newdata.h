@@ -228,12 +228,7 @@ namespace assembly {
 	public:
 		asm_function(std::string);
 
-		inline void add_statement(const asm_statement& stmt)
-		{
-			// TODO: Make a type-safe copy
-			std::unique_ptr<asm_statement> copy(new asm_statement(stmt));
-			m_statements.push_back(std::move(copy));
-		}
+		void add_statement(const std::unique_ptr<asm_statement> &stmt);
 	};
 
 	class asm_file {
@@ -255,6 +250,7 @@ namespace assembly {
 	};
 
 	std::unique_ptr<asm_statement> parse_statement(std::string);
+	std::unique_ptr<asm_statement> copy_statement(const std::unique_ptr<asm_statement>&);
 
 } // namespace assembly
 

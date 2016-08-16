@@ -485,6 +485,11 @@ namespace assembly {
 	{
 	}
 
+	void asm_function::add_statement(const std::unique_ptr<asm_statement> &stmt)
+	{
+		m_statements.push_back(copy_statement(stmt));
+	}
+
 	/////////////////////////////////////////////////////////////////////
 	//
 	// Class asm_file
@@ -596,7 +601,7 @@ namespace assembly {
 				}
 			}
 
-			fn->add_statement(*(*it));
+			fn->add_statement(*it);
 		}
 
 		// TODO: Implement normalize flag handling
@@ -808,5 +813,52 @@ namespace assembly {
 		statement->analyze();
 
 		return statement;
+	}
+
+	std::unique_ptr<asm_statement> copy_statement(const std::unique_ptr<asm_statement> &stmt)
+	{
+		const asm_statement *raw = stmt.get();
+		std::unique_ptr<asm_statement> copy;
+		enum stmt_type type = stmt->type();
+
+		switch (type) {
+		case stmt_type::TYPE:
+			{
+				const asm_type *t = dynamic_cast<const asm_type*>(raw);
+				copy = std::unique_ptr<asm_statement>(new asm_type(*t));
+				break;
+			}
+		case stmt_type::LABEL:
+			{
+				const asm_label *l = dynamic_cast<const asm_label*>(raw);
+				copy = std::unique_ptr<asm_statement>(new asm_label(*l));
+				break;
+			}
+		case stmt_type::SIZE:
+			{
+				const asm_size *s = dynamic_cast<const asm_size*>(raw);
+				copy = std::unique_ptr<asm_statement>(new asm_size(*s));
+				break;
+			}
+		case stmt_type::SECTION:
+			{
+				const asm_section *s = dynamic_cast<const asm_section*>(raw);
+				copy = std::unique_ptr<asm_statement>(new asm_section(*s));
+				break;
+			}
+		case stmt_type::COMM:
+			{
+				const asm_comm *c = dynamic_cast<const asm_comm*>(raw);
+				copy = std::unique_ptr<asm_statement>(new asm_comm(*c));
+				break;
+			}
+		default:
+			{
+				copy = std::unique_ptr<asm_statement>(new asm_statement(*raw));
+				break;
+			}
+		}
+
+		return copy;
 	}
 }
