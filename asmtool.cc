@@ -33,7 +33,7 @@ asm_file *load_file(const char *name)
 		assembly::asm_file f(name);
 		f.load();
 
-		f.for_each_symbol([](string s, assembly::asm_symbol info) {
+		f.for_each_symbol([&f](string s, assembly::asm_symbol info) {
 				string scope;
 				string type;
 
@@ -56,6 +56,18 @@ asm_file *load_file(const char *name)
 				cout << "Scope " << setw(20) << scope;
 				cout << "Type " << setw(10) << type;
 				cout << "Idx" << info.m_idx << endl;
+
+				if (info.m_type == assembly::symbol_type::FUNCTION) {
+					std::unique_ptr<assembly::asm_function>
+						fn(f.get_function(s, static_cast<assembly::func_flags>(assembly::func_flags::STRIP_DEBUG | assembly::func_flags::NORMALIZE)));
+
+					if (fn == nullptr)
+						return;
+
+					fn->for_each_statement([](assembly::asm_statement& stmt) {
+						cout << '\t' << stmt.serialize() << endl;
+					});
+				}
 		});
 
 	}
