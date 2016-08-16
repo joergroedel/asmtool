@@ -229,6 +229,8 @@ namespace assembly {
 		asm_function(std::string);
 
 		void add_statement(const std::unique_ptr<asm_statement> &stmt);
+
+		void for_each_statement(std::function<void(asm_statement&)>);
 	};
 
 	class asm_file {
