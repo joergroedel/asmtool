@@ -15,7 +15,7 @@
 #include <unistd.h>
 
 #include "assembly.h"
-#include "newdiff.h"
+#include "generic-diff.h"
 #include "helper.h"
 #include "diff.h"
 

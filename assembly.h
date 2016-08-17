@@ -5,7 +5,7 @@
 #include <memory>
 #include <map>
 
-#include "newdiff.h"
+#include "generic-diff.h"
 
 namespace assembly {
 
