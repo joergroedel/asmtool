@@ -215,10 +215,15 @@ namespace assembly {
 							return;
 						}
 
-						if ((type != stmt_type::INSTRUCTION) ||
-						    (t1 != token_type::IDENTIFIER)   ||
-						    ((s1[0] == s2[0]) && (s1[0] != '.')))
-							ret = (s1 == s2);
+						ret = (s1 == s2);
+
+						if (ret)
+							return;
+
+						if ((type == stmt_type::INSTRUCTION) &&
+						    (t1  == token_type::IDENTIFIER))
+							ret = generated_symbol(s1) && generated_symbol(s2);
+
 					});
 				});
 
