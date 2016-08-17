@@ -3,7 +3,7 @@
 
 #include <memory>
 
-namespace differences {
+namespace diff {
 
 	using size_type = unsigned;
 
@@ -160,6 +160,6 @@ namespace differences {
 		}
 	};
 
-} // Namespace differences
+} // Namespace diff
 
 #endif

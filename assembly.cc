@@ -560,12 +560,12 @@ namespace assembly {
 			handler(*(*it));
 	}
 
-	differences::size_type asm_function::elements() const
+	diff::size_type asm_function::elements() const
 	{
-		return static_cast<differences::size_type>(m_statements.size());
+		return static_cast<diff::size_type>(m_statements.size());
 	}
 
-	const asm_statement& asm_function::element(differences::size_type idx) const
+	const asm_statement& asm_function::element(diff::size_type idx) const
 	{
 		const asm_statement *ptr = m_statements[idx].get();
 

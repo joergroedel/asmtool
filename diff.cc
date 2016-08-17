@@ -25,7 +25,7 @@ diff_options::diff_options()
 
 static void print_diff_line(assembly::asm_function &fn1,
 			    assembly::asm_function &fn2,
-			    differences::diff_element &item,
+			    diff::diff_element &item,
 			    struct diff_options &opts)
 {
 	static const char *reset = "\033[0m";
@@ -41,21 +41,21 @@ static void print_diff_line(assembly::asm_function &fn1,
 	no_color = colors ? reset : "";
 
 	switch (item.type) {
-	case differences::diff_type::EQUAL:
+	case diff::diff_type::EQUAL:
 		c     = ' ';
 		color = colors ? black : "";
 		str0  = fn1.element(item.idx_a).statement();
 		str1  = fn1.element(item.idx_a).statement();
 		str2  = fn2.element(item.idx_b).statement();
 		break;
-	case differences::diff_type::ADDED:
+	case diff::diff_type::ADDED:
 		c     = '+';
 		color = colors ? green : "";
 		str0  = fn2.element(item.idx_b).statement();
 		str1  = "";
 		str2  = fn2.element(item.idx_b).statement();
 		break;
-	case differences::diff_type::REMOVED:
+	case diff::diff_type::REMOVED:
 		c     = '-';
 		color = colors ? red : "";
 		str0  = fn1.element(item.idx_a).statement();
@@ -97,7 +97,7 @@ static void print_diff(assembly::asm_function &fn1, assembly::asm_function &fn2,
 		if (i == size)
 			break;
 
-		if (diff_info[i].type != differences::diff_type::EQUAL)
+		if (diff_info[i].type != diff::diff_type::EQUAL)
 			to_print = i + context + 1;
 	}
 
@@ -109,7 +109,7 @@ static void print_diff(assembly::asm_function &fn1, assembly::asm_function &fn2,
 
 		auto next = std::min(i + context + 1, size - 1);
 
-		if (diff_info[next].type != differences::diff_type::EQUAL) {
+		if (diff_info[next].type != diff::diff_type::EQUAL) {
 			if (!to_print)
 				std::cout << "         [...]" << std::endl;
 
