@@ -22,13 +22,6 @@ struct diff_options {
 	diff_options();
 };
 
-void diff(asm_file *file1, asm_file *file2, std::ostream &os,
-	  struct diff_options &opts);
-bool compare_statements(asm_file *file1, asm_statement &s1,
-			asm_file *file2, asm_statement &s2,
-			std::map<std::string, std::string> &symbol_map);
-bool compare_functions(asm_file *file1, asm_function *f1,
-		       asm_file *file2, asm_function *f2,
-		       std::map<std::string, std::string> &symbol_map);
+void diff_files(const char*, const char*, struct diff_options&);
 
 #endif
