@@ -204,6 +204,9 @@ namespace assembly {
 			auto &p1 = m_params[idx];
 			auto &p2 = stmt.m_params[idx];
 
+			if (!ret)
+				break;
+
 			if (p1.tokens() != p2.tokens())
 				return false;
 
