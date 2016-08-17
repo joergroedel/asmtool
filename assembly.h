@@ -275,6 +275,8 @@ namespace assembly {
 		std::unique_ptr<asm_function> get_function(std::string, enum func_flags) const;
 	};
 
+	using asm_diff = differences::diff<assembly::asm_statement>;
+
 	std::unique_ptr<asm_statement> parse_statement(std::string);
 	std::unique_ptr<asm_statement> copy_statement(const std::unique_ptr<asm_statement>&);
 
