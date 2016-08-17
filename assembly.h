@@ -240,7 +240,7 @@ namespace assembly {
 		asm_symbol();
 	};
 
-	class asm_function {
+	class asm_function : public differences::diffable<asm_statement> {
 	protected:
 		std::vector<std::unique_ptr<asm_statement>>	m_statements;
 		std::string					m_name;
@@ -251,6 +251,9 @@ namespace assembly {
 		void add_statement(const std::unique_ptr<asm_statement> &stmt);
 
 		void for_each_statement(std::function<void(asm_statement&)>);
+
+		virtual differences::size_type elements() const;
+		virtual const asm_statement& element(differences::size_type) const;
 	};
 
 	class asm_file {
