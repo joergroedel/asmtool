@@ -296,6 +296,11 @@ namespace assembly {
 		return os.str();
 	}
 
+	std::string asm_statement::statement() const
+	{
+		return m_stmt;
+	}
+
 	/////////////////////////////////////////////////////////////////////
 	//
 	// Class asm_type

@@ -164,6 +164,7 @@ namespace assembly {
 		void for_each_param(param_handler);
 
 		std::string serialize() const;
+		std::string statement() const;
 	};
 
 	class asm_type : public asm_statement {
