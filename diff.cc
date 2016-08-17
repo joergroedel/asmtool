@@ -20,7 +20,7 @@
 #include "diff.h"
 
 diff_options::diff_options()
-	: show(false), pretty(false), context(3)
+	: show(false), pretty(false), color(true), context(3)
 { }
 
 static void print_diff_line(assembly::asm_function &fn1,
@@ -33,9 +33,9 @@ static void print_diff_line(assembly::asm_function &fn1,
 	static const char *red   = "\033[31m";
 	static const char *green = "\033[32m";
 
-	bool colors = isatty(fileno(stdout));
-	std::string str0, str1, str2;
 	const char *color = "", *no_color = "";
+	std::string str0, str1, str2;
+	bool colors = opts.color;
 	char c = ' ';
 
 	no_color = colors ? reset : "";

@@ -15,6 +15,7 @@
 struct diff_options {
 	bool show;
 	bool pretty;
+	bool color;
 	int context;
 
 	diff_options();
