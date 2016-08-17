@@ -12,8 +12,6 @@
 #include <string>
 #include <map>
 
-#include "asmfile.h"
-
 struct diff_options {
 	bool show;
 	bool pretty;

@@ -17,50 +17,12 @@
 #include <getopt.h>
 #include <unistd.h>
 
-#include "asmfile.h"
+#include "assembly.h"
 #include "helper.h"
 #include "diff.h"
 
-#include "assembly.h"
 
 using namespace std;
-
-asm_file *load_file(const char *name)
-{
-	ifstream in(name);
-	asm_file *file;
-
-	if (!in.is_open()) {
-		cerr << "File not open: " << name << endl;
-		return 0;
-	}
-
-	file = new asm_file();
-
-	while (!in.eof()) {
-		string line;
-
-		getline(in, line);
-
-		line = trim(strip_comment(line));
-
-		if (line == "")
-			continue;
-
-		vector<string> lines = split_trim(";", line);
-
-		for (auto it = lines.begin(); it != lines.end(); it++) {
-			if (it->size() > 0)
-				file->add_statement(asm_statement(*it));
-		}
-	}
-
-	file->analyze();
-
-	in.close();
-
-	return file;
-}
 
 void usage(const char *cmd)
 {
