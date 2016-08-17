@@ -4,6 +4,8 @@
 #include <string>
 #include <memory>
 
+#include "newdiff.h"
+
 namespace assembly {
 
 	enum class stmt_type {
