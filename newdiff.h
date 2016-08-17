@@ -77,8 +77,8 @@ namespace differences {
 
 		void create()
 		{
-			auto size_a = m_a.elements();
-			auto size_b = m_b.elements();
+			auto size_a = m_a.elements() + 1;
+			auto size_b = m_b.elements() + 1;
 			decltype(size_a) a;
 			decltype(size_b) b;
 
@@ -91,7 +91,7 @@ namespace differences {
 						continue;
 					}
 
-					if (m_a.element(a) == m_b.element(b)) {
+					if (m_a.element(a - 1) == m_b.element(b - 1)) {
 						m_lcs.set(a, b, m_lcs.get(a - 1, b - 1) + 1);
 						m_lcs.set_bool(a, b, true);
 					} else {
@@ -130,6 +130,8 @@ namespace differences {
 
 				element.type  = diff_type::REMOVED;
 				element.idx_a = a - 1;
+
+				output.push_back(element);
 			}
 		}
 
