@@ -17,6 +17,7 @@ namespace assembly {
 		SECTION,
 		TEXT,
 		DATA,
+		DATADEF,
 		BSS,
 		TYPE,
 		GLOBAL,

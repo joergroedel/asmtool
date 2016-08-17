@@ -24,17 +24,17 @@ namespace assembly {
 		{ .str = ".type",			.type = stmt_type::TYPE			},
 		{ .str = ".globl",			.type = stmt_type::GLOBAL		},
 		{ .str = ".local",			.type = stmt_type::LOCAL		},
-		{ .str = ".string",			.type = stmt_type::STRING		},
-		{ .str = ".ascii",			.type = stmt_type::ASCII		},
-		{ .str = ".byte",			.type = stmt_type::BYTE			},
-		{ .str = ".short",			.type = stmt_type::SHORT		},
-		{ .str = ".word",			.type = stmt_type::WORD			},
-		{ .str = ".long",			.type = stmt_type::LONG			},
-		{ .str = ".quad",			.type = stmt_type::QUAD			},
-		{ .str = ".float",			.type = stmt_type::FLOAT		},
-		{ .str = ".double",			.type = stmt_type::DOUBLE		},
-		{ .str = ".org",			.type = stmt_type::ORG			},
-		{ .str = ".zero",			.type = stmt_type::ZERO			},
+		{ .str = ".string",			.type = stmt_type::DATADEF		},
+		{ .str = ".ascii",			.type = stmt_type::DATADEF		},
+		{ .str = ".byte",			.type = stmt_type::DATADEF		},
+		{ .str = ".short",			.type = stmt_type::DATADEF		},
+		{ .str = ".word",			.type = stmt_type::DATADEF		},
+		{ .str = ".long",			.type = stmt_type::DATADEF		},
+		{ .str = ".quad",			.type = stmt_type::DATADEF		},
+		{ .str = ".float",			.type = stmt_type::DATADEF		},
+		{ .str = ".double",			.type = stmt_type::DATADEF		},
+		{ .str = ".org",			.type = stmt_type::DATADEF		},
+		{ .str = ".zero",			.type = stmt_type::DATADEF		},
 		{ .str = ".size",			.type = stmt_type::SIZE			},
 		{ .str = ".align",			.type = stmt_type::ALIGN		},
 		{ .str = ".p2align",			.type = stmt_type::P2ALIGN		},
@@ -223,7 +223,8 @@ namespace assembly {
 						if (ret)
 							return;
 
-						if ((type == stmt_type::INSTRUCTION) &&
+						if (((type == stmt_type::INSTRUCTION) ||
+						     (type == stmt_type::DATADEF))    &&
 						    (t1  == token_type::IDENTIFIER))
 							ret = generated_symbol(s1) && generated_symbol(s2);
 
