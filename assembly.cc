@@ -68,6 +68,12 @@ namespace assembly {
 		return (static_cast<int>(f) != 0);
 	}
 
+	// Forward declarations
+	static bool is_identifier_char(char c);
+	static bool is_register_char(char c);
+	static bool is_typeflag_char(char c);
+	static bool is_number_char(char c);
+
 	/////////////////////////////////////////////////////////////////////
 	//
 	// Class asm_token
@@ -596,42 +602,60 @@ namespace assembly {
 			std::vector<std::string> stmts = split_trim(";", line);
 
 			for (auto it = stmts.begin(), end = stmts.end(); it != end; ++it) {
-				if (*it == "")
-					continue;
+				//std::cout << *it << std::endl;
+				while (*it != "") {
+					// first check for labels
+					bool is_label = true;
+					std::string input;
+					int pos = it->size();
 
-				std::unique_ptr<asm_statement> stmt = parse_statement(*it);
-				if (stmt == nullptr)
-					continue;
+					for (int i = 0, e = it->size(); i != e && is_label; ++i) {
+						if (!(is_identifier_char((*it)[i]) || (*it)[i] == ':'))
+							break;
 
-				if (stmt->type() == stmt_type::LABEL) {
-					asm_label *label = dynamic_cast<asm_label*>(stmt.get());
-					std::string name = label->get_label();
+						if ((*it)[i] == ':') {
+							pos = i + 1;
+							break;
+						}
+					}
 
-					if (!(name.size() >= 2 && name.substr(0,2) == ".L"))
-						m_symbols[name].m_idx = m_statements.size();
+					input = it->substr(0, pos);
+					*it   = it->substr(pos);
 
-				} else if (stmt->type() == stmt_type::TYPE) {
-					asm_type *type = dynamic_cast<asm_type*>(stmt.get());
+					std::unique_ptr<asm_statement> stmt = parse_statement(input);
+					if (stmt == nullptr)
+						continue;
 
-					m_symbols[type->get_symbol()].m_type = type->get_type();
-				} else if (stmt->type() == stmt_type::LOCAL ||
-					   stmt->type() == stmt_type::GLOBAL) {
-					std::string symbol;
+					if (stmt->type() == stmt_type::LABEL) {
+						asm_label *label = dynamic_cast<asm_label*>(stmt.get());
+						std::string name = label->get_label();
 
-					stmt->param(0, [&symbol](asm_param& p) {
-						p.token(0, [&symbol](enum token_type t, std::string s) {
-							if (t == token_type::IDENTIFIER)
-								symbol = s;
-						});
-					});
+						if (!(name.size() >= 2 && name.substr(0,2) == ".L"))
+							m_symbols[name].m_idx = m_statements.size();
 
-					if (symbol != "")
-						m_symbols[symbol].m_scope = stmt->type() == stmt_type::LOCAL ?
-										symbol_scope::LOCAL :
-										symbol_scope::GLOBAL;
+					} else if (stmt->type() == stmt_type::TYPE) {
+						asm_type *type = dynamic_cast<asm_type*>(stmt.get());
+
+						m_symbols[type->get_symbol()].m_type = type->get_type();
+					} else if (stmt->type() == stmt_type::LOCAL ||
+							stmt->type() == stmt_type::GLOBAL) {
+						std::string symbol;
+
+						stmt->param(0, [&symbol](asm_param& p) {
+								p.token(0, [&symbol](enum token_type t, std::string s) {
+									if (t == token_type::IDENTIFIER)
+									symbol = s;
+									});
+								});
+
+						if (symbol != "")
+							m_symbols[symbol].m_scope = stmt->type() == stmt_type::LOCAL ?
+								symbol_scope::LOCAL :
+								symbol_scope::GLOBAL;
+					}
+
+					m_statements.push_back(std::move(stmt));
 				}
-
-				m_statements.push_back(std::move(stmt));
 			}
 		}
 	}
