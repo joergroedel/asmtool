@@ -43,7 +43,7 @@ namespace differences {
 	public:
 		lcs_matrix(size_type x, size_type y)
 			: m_x(x + 1), m_y(y + 1),
-			  m_matrix(new int(m_x * m_y)), m_bool(new bool(m_x * m_y))
+			  m_matrix(new int[m_x * m_y]), m_bool(new bool[m_x * m_y])
 		{
 		}
 
@@ -145,7 +145,7 @@ namespace differences {
 			auto size_a = m_a.elements();
 			auto size_b = m_b.elements();
 
-			return ((size_a == size_b) && (m_lcs.get(size_a, size_b) == size_a));
+			return ((size_a != size_b) || (m_lcs.get(size_a, size_b) != size_a));
 		}
 
 		std::vector<diff_element> get_diff() const
