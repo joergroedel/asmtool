@@ -129,6 +129,42 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 		file1.load();
 		file2.load();
 
+#if 0
+		file2.for_each_symbol([](std::string sym, assembly::asm_symbol info) {
+			std::string scope;
+			std::string type;
+
+			switch (info.m_scope) {
+			case assembly::symbol_scope::LOCAL:
+				scope = "Local";
+				break;
+			case assembly::symbol_scope::GLOBAL:
+				scope = "Global";
+				break;
+			default:
+				scope = "Unknown";
+				break;
+			}
+
+			switch (info.m_type) {
+			case assembly::symbol_type::FUNCTION:
+				type = "Function";
+				break;
+			case assembly::symbol_type::OBJECT:
+				type = "Object";
+				break;
+			default:
+				type = "Unknown";
+				break;
+			}
+
+			std::cout << std::left;
+			std::cout << "Symbol: " << std::setw(48) << sym;
+			std::cout << " Scope: " << std::setw(10) << scope;
+			std::cout << " Type: "  << std::setw(10) << type << std::endl;
+		});
+#endif
+
 		// Get function lists from input files
 		file1.for_each_symbol([&f1_functions](std::string symbol, assembly::asm_symbol info) {
 			if (!generated_symbol(symbol) &&
