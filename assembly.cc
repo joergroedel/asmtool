@@ -306,6 +306,33 @@ namespace assembly {
 		std::for_each(m_params.begin(), m_params.end(), handler);
 	}
 
+	void asm_statement::map_symbols(symbol_map &map, const asm_statement &stmt) const
+	{
+		auto size = m_params.size();
+
+		for (size_t idx = 0; idx < size; ++idx) {
+			auto &p1 = m_params[idx];
+			auto &p2 = stmt.m_params[idx];
+
+			for (size_t jdx = 0; jdx < p1.tokens(); ++jdx) {
+				p1.token(jdx, [&jdx, &p2, &map](enum token_type t1, std::string s1) {
+					p2.token(jdx, [&t1, &s1, &map](enum token_type t2, std::string s2) {
+						if ((t1 != token_type::IDENTIFIER) || !generated_symbol(s1))
+							return;
+
+						if (map.find(s1) != map.end() && map[s1] != s2) {
+							std::cerr << "WARNING: Symbol " << s1;
+							std::cerr << " maps to " << map[s1];
+							std::cerr << " and " << s2 << std::endl;
+						} else {
+							map[s1] = s2;
+						}
+					});
+				});
+			}
+		}
+	}
+
 	std::string asm_statement::serialize() const
 	{
 		std::ostringstream os;

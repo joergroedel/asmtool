@@ -90,6 +90,8 @@ namespace assembly {
 		STRIP_DEBUG	= 2,
 	};
 
+	using symbol_map = std::map<std::string, std::string>;
+
 	constexpr enum func_flags operator|(const enum func_flags f1,
 					    const enum func_flags f2)
 	{
@@ -169,6 +171,8 @@ namespace assembly {
 		void param(param_type::size_type, const_param_handler) const;
 		void for_each_param(param_handler);
 		void for_each_param(const_param_handler) const;
+
+		void map_symbols(symbol_map&, const asm_statement&) const;
 
 		std::string serialize() const;
 		std::string statement() const;
