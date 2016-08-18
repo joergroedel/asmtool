@@ -955,6 +955,8 @@ namespace assembly {
 				break;
 			case '(':
 			case ')':
+			case '[':
+			case ']':
 				depth += (*it == '(') ? 1 : -1;
 				// Fall-Through
 			case '+':
@@ -962,6 +964,7 @@ namespace assembly {
 			case '*':
 			case '/':
 			case ':':
+			case '=':
 				token += *it;
 				param.add_token(asm_token(token, token_type::OPERATOR));
 				token = "";
