@@ -22,10 +22,11 @@
 struct diff_result {
 	std::string symbol1;
 	std::string symbol2;
-	bool result;
+	bool flat_diff;
+	bool deep_diff;
 
 	diff_result()
-		: result(false)
+		: flat_diff(false), deep_diff(false)
 	{
 	}
 };
@@ -131,7 +132,7 @@ static void print_diff(assembly::asm_function &fn1, assembly::asm_function &fn2,
 	}
 }
 
-static bool compare(const assembly::asm_file &file1,
+static void compare(const assembly::asm_file &file1,
 		    const assembly::asm_file &file2,
 		    std::string fname1,
 		    std::string fname2,
@@ -149,13 +150,15 @@ static bool compare_symbol_map(const assembly::asm_file &file1,
 		if (!file1.has_function(it->second) || !file2.has_function(it->first))
 			continue;
 
-		ret = ret && compare(file1, file2, it->second, it->first, results);
+		compare(file1, file2, it->second, it->first, results);
+
+		ret = ret && results[it->first].deep_diff;
 	}
 
 	return ret;
 }
 
-static bool compare(const assembly::asm_file &file1,
+static void compare(const assembly::asm_file &file1,
 		    const assembly::asm_file &file2,
 		    std::string fname1,
 		    std::string fname2,
@@ -163,7 +166,7 @@ static bool compare(const assembly::asm_file &file1,
 {
 	// First check if we already compared these functions
 	if (results.find(fname2) != results.end())
-		return results[fname2].result;
+		return;
 
 	results[fname2].symbol1 = fname1;
 	results[fname2].symbol2 = fname2;
@@ -173,27 +176,34 @@ static bool compare(const assembly::asm_file &file1,
 	// We didn't, run compare
 	std::unique_ptr<assembly::asm_function> fn1(file1.get_function(fname1, flags));
 	std::unique_ptr<assembly::asm_function> fn2(file2.get_function(fname2, flags));
-	bool ret = true;
 
 	if (fn1 == nullptr || fn2 == nullptr) {
-		ret = results[fname2].result = false;
-	} else {
-		assembly::asm_diff compare(*fn1, *fn2);
-
-		if (compare.is_different()) {
-			ret = results[fname2].result = false;
-		} else {
-			assembly::symbol_map map;
-
-			results[fname2].result = true;
-
-			fn2->get_symbol_map(map, *fn2);
-
-			ret = compare_symbol_map(file1, file2, map, results);
-		}
+		results[fname2].flat_diff = false;
+		return;
 	}
 
-	return ret;
+	assembly::asm_diff compare(*fn1, *fn2);
+
+	if (compare.is_different()) {
+		results[fname2].flat_diff = false;
+		results[fname2].deep_diff = false;
+	} else {
+		assembly::symbol_map map;
+
+		// Flat diff didn't show any differences
+		results[fname2].flat_diff = true;
+
+		// We need to set deep_diff to true here because it might be
+		// used in compare_symbol_map when we have functions that call
+		// each other recursivly, so make sure it has a defined value
+		// there. We update it to the real value when compare_symbol_map
+		// returns.
+		results[fname2].deep_diff = true;
+
+		fn2->get_symbol_map(map, *fn2);
+
+		results[fname2].deep_diff = compare_symbol_map(file1, file2, map, results);
+	}
 }
 
 void diff_files(const char *fname1, const char *fname2, struct diff_options &opts)
@@ -282,7 +292,7 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 			if (compare.is_different()) {
 				results[*it].symbol1 = *it;
 				results[*it].symbol2 = *it;
-				results[*it].result  = false;
+				results[*it].flat_diff  = false;
 
 				std::cout << std::left;
 				std::cout << std::setw(20) << "Changed function: " << *it << std::endl;
@@ -297,7 +307,7 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 
 				results[*it].symbol1 = *it;
 				results[*it].symbol2 = *it;
-				results[*it].result  = true;
+				results[*it].flat_diff = true;
 
 				fn2->get_symbol_map(map, *fn2);
 
