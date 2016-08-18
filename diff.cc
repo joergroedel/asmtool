@@ -19,6 +19,19 @@
 #include "helper.h"
 #include "diff.h"
 
+struct diff_result {
+	std::string symbol1;
+	std::string symbol2;
+	bool result;
+
+	diff_result()
+		: result(false)
+	{
+	}
+};
+
+using result_map = std::map<std::string, struct diff_result>;
+
 diff_options::diff_options()
 	: show(false), pretty(false), color(true), context(3)
 { }
@@ -118,6 +131,71 @@ static void print_diff(assembly::asm_function &fn1, assembly::asm_function &fn2,
 	}
 }
 
+static bool compare(const assembly::asm_file &file1,
+		    const assembly::asm_file &file2,
+		    std::string fname1,
+		    std::string fname2,
+		    result_map &results);
+
+static bool compare_symbol_map(const assembly::asm_file &file1,
+			       const assembly::asm_file &file2,
+			       assembly::symbol_map &map,
+			       result_map &results)
+{
+	bool ret = true;
+
+	for (auto it = map.begin(), end = map.end(); it != end; ++it) {
+		// Limit comparison to functions for now
+		if (!file1.has_function(it->second) || !file2.has_function(it->first))
+			continue;
+
+		ret = ret && compare(file1, file2, it->second, it->first, results);
+	}
+
+	return ret;
+}
+
+static bool compare(const assembly::asm_file &file1,
+		    const assembly::asm_file &file2,
+		    std::string fname1,
+		    std::string fname2,
+		    result_map &results)
+{
+	// First check if we already compared these functions
+	if (results.find(fname2) != results.end())
+		return results[fname2].result;
+
+	results[fname2].symbol1 = fname1;
+	results[fname2].symbol2 = fname2;
+
+	constexpr auto flags = assembly::func_flags::STRIP_DEBUG | assembly::func_flags::NORMALIZE;
+
+	// We didn't, run compare
+	std::unique_ptr<assembly::asm_function> fn1(file1.get_function(fname1, flags));
+	std::unique_ptr<assembly::asm_function> fn2(file2.get_function(fname2, flags));
+	bool ret = true;
+
+	if (fn1 == nullptr || fn2 == nullptr) {
+		ret = results[fname2].result = false;
+	} else {
+		assembly::asm_diff compare(*fn1, *fn2);
+
+		if (compare.is_different()) {
+			ret = results[fname2].result = false;
+		} else {
+			assembly::symbol_map map;
+
+			results[fname2].result = true;
+
+			fn2->get_symbol_map(map, *fn2);
+
+			ret = compare_symbol_map(file1, file2, map, results);
+		}
+	}
+
+	return ret;
+}
+
 void diff_files(const char *fname1, const char *fname2, struct diff_options &opts)
 {
 	assembly::asm_file file1(fname1);
@@ -125,6 +203,7 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 
 	try {
 		std::vector<std::string> f1_functions, f2_functions;
+		std::map<std::string, struct diff_result> results;
 
 		file1.load();
 		file2.load();
@@ -201,11 +280,33 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 			assembly::asm_diff compare(*fn1, *fn2);
 
 			if (compare.is_different()) {
+				results[*it].symbol1 = *it;
+				results[*it].symbol2 = *it;
+				results[*it].result  = false;
+
 				std::cout << std::left;
 				std::cout << std::setw(20) << "Changed function: " << *it << std::endl;
 
 				if (opts.show)
 					print_diff(*fn1, *fn2, compare, opts);
+			} else {
+				// Functions are apparently identical - but the
+				// difference might be in the compiler-generated
+				// symbols they reference.  Check for that.
+				assembly::symbol_map map;
+
+				results[*it].symbol1 = *it;
+				results[*it].symbol2 = *it;
+				results[*it].result  = true;
+
+				fn2->get_symbol_map(map, *fn2);
+
+				if (!compare_symbol_map(file1, file2, map, results)) {
+					std::cout << std::left;
+					std::cout << std::setw(20) << "Changed function: " << *it;
+					std::cout << " (Functions are identical, but referenced compiler-generated symbols changed)";
+					std::cout << std::endl;
+				}
 			}
 		}
 
