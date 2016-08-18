@@ -655,6 +655,20 @@ namespace assembly {
 		return symbols;
 	}
 
+	void asm_function::get_symbol_map(symbol_map &map, const asm_function &fn) const
+	{
+		auto size = m_statements.size();
+		decltype(size) i;
+
+		for (i = 0; i < size; ++i) {
+			if ((m_statements[i]->type() != stmt_type::INSTRUCTION) &&
+			    (m_statements[i]->type() != stmt_type::DATADEF))
+				continue;
+
+			m_statements[i]->map_symbols(map, *(fn.m_statements[i]));
+		}
+	}
+
 	/////////////////////////////////////////////////////////////////////
 	//
 	// Class asm_file

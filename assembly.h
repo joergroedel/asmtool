@@ -269,6 +269,7 @@ namespace assembly {
 		virtual const asm_statement& element(diff::size_type) const;
 
 		std::vector<std::string> get_symbols() const;
+		void get_symbol_map(symbol_map&, const asm_function&) const;
 	};
 
 	class asm_file {
