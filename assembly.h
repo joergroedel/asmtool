@@ -122,8 +122,9 @@ namespace assembly {
 
 	class asm_param {
 	protected:
-		using token_t = std::vector<asm_token>;
-		using token_handler = std::function<void(asm_token&)>;
+		using token_t			= std::vector<asm_token>;
+		using token_handler		= std::function<void(asm_token&)>;
+		using const_token_handler	= std::function<void(const asm_token&)>;
 		token_t m_tokens;
 
 	public:
@@ -134,13 +135,15 @@ namespace assembly {
 		void token(token_t::size_type,
 			   std::function<void(enum token_type, std::string)>) const;
 		void for_each_token(token_handler);
+		void for_each_token(const_token_handler) const;
 		std::string serialize() const;
 	};
 
 	class asm_statement {
 	protected:
-		using param_type = std::vector<asm_param>;
-		using param_handler = std::function<void(asm_param&)>;
+		using param_type		= std::vector<asm_param>;
+		using param_handler		= std::function<void(asm_param&)>;
+		using const_param_handler	= std::function<void(const asm_param&)>;
 
 		std::string		m_stmt;
 		std::string		m_instr;
@@ -163,7 +166,9 @@ namespace assembly {
 		template<typename T> void add_param(T&&);
 
 		void param(param_type::size_type, param_handler);
+		void param(param_type::size_type, const_param_handler) const;
 		void for_each_param(param_handler);
+		void for_each_param(const_param_handler) const;
 
 		std::string serialize() const;
 		std::string statement() const;
@@ -255,8 +260,11 @@ namespace assembly {
 
 		void for_each_statement(std::function<void(asm_statement&)>);
 
+		// Diffable interface
 		virtual diff::size_type elements() const;
 		virtual const asm_statement& element(diff::size_type) const;
+
+		std::vector<std::string> get_symbols() const;
 	};
 
 	class asm_file {

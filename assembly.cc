@@ -156,6 +156,11 @@ namespace assembly {
 		for_each(m_tokens.begin(), m_tokens.end(), handler);
 	}
 
+	void asm_param::for_each_token(const_token_handler handler) const
+	{
+		for_each(m_tokens.begin(), m_tokens.end(), handler);
+	}
+
 	std::string asm_param::serialize() const
 	{
 		std::ostringstream os;
@@ -282,7 +287,21 @@ namespace assembly {
 		p(m_params[idx]);
 	}
 
+	void asm_statement::param(param_type::size_type idx,
+				  const_param_handler p) const
+	{
+		if (m_params.size() <= idx)
+			return;
+
+		p(m_params[idx]);
+	}
+
 	void asm_statement::for_each_param(param_handler handler)
+	{
+		std::for_each(m_params.begin(), m_params.end(), handler);
+	}
+
+	void asm_statement::for_each_param(const_param_handler handler) const
 	{
 		std::for_each(m_params.begin(), m_params.end(), handler);
 	}
@@ -579,6 +598,34 @@ namespace assembly {
 		const asm_statement *ptr = m_statements[idx].get();
 
 		return *ptr;
+	}
+
+	std::vector<std::string> asm_function::get_symbols() const
+	{
+		std::map<std::string, bool> found;
+		std::vector<std::string> symbols;
+
+		// Keep the symbols in a map first to filter out duplicates
+		for (auto it = m_statements.begin(), end = m_statements.end();
+		     it != end; ++it) {
+			if ((*it)->type() != stmt_type::INSTRUCTION &&
+			    (*it)->type() != stmt_type::DATADEF)
+				continue;
+
+			(*it)->for_each_param([&found](const asm_param &p) {
+				p.for_each_token([&found](const asm_token &t) {
+					if (t.type() != token_type::IDENTIFIER)
+						return;
+					found[t.token()] = true;
+				});
+			});
+		}
+
+		// Now copy the symbols into the vector
+		for (auto it = found.begin(), end = found.end(); it != end; ++it)
+			symbols.push_back(it->first);
+
+		return symbols;
 	}
 
 	/////////////////////////////////////////////////////////////////////
