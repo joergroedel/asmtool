@@ -69,6 +69,7 @@ namespace assembly {
 	}
 
 	// Forward declarations
+	static std::vector<std::string> line_to_statements(std::string line);
 	static bool is_valid_symbol(std::string);
 	static bool is_identifier_char(char c);
 	static bool is_register_char(char c);
@@ -600,80 +601,77 @@ namespace assembly {
 
 			line = trim(strip_comment(line));
 
-			std::vector<std::string> stmts = split_trim(";", line);
+			std::vector<std::string> stmts = line_to_statements(line);
 
 			for (auto it = stmts.begin(), end = stmts.end(); it != end; ++it) {
-				//std::cout << *it << std::endl;
-				while (*it != "") {
-					// first check for labels
-					bool is_label = true;
-					std::string input;
-					int pos = it->size();
+				// first check for labels
+				bool is_label = true;
+				std::string input;
+				int pos = it->size();
 
-					for (int i = 0, e = it->size(); i != e && is_label; ++i) {
-						if (!(is_identifier_char((*it)[i]) || (*it)[i] == ':'))
-							break;
+				for (int i = 0, e = it->size(); i != e && is_label; ++i) {
+					if (!(is_identifier_char((*it)[i]) || (*it)[i] == ':'))
+						break;
 
-						if ((*it)[i] == ':') {
-							pos = i + 1;
-							break;
-						}
+					if ((*it)[i] == ':') {
+						pos = i + 1;
+						break;
 					}
-
-					input = it->substr(0, pos);
-					*it   = it->substr(pos);
-
-					std::unique_ptr<asm_statement> stmt = parse_statement(input);
-					if (stmt == nullptr)
-						continue;
-
-					if (stmt->type() == stmt_type::LABEL) {
-						asm_label *label = dynamic_cast<asm_label*>(stmt.get());
-						std::string name = label->get_label();
-
-						// Symbols starting with '.' have local scope only
-						if (is_valid_symbol(name)) {
-							m_symbols[name].m_idx = m_statements.size();
-							if (m_symbols[name].m_scope == symbol_scope::UNKNOWN)
-								m_symbols[name].m_scope = symbol_scope::GLOBAL;
-							if (m_symbols[name].m_type == symbol_type::UNKNOWN)
-								m_symbols[name].m_type = symbol_type::OBJECT;
-						}
-
-					} else if (stmt->type() == stmt_type::TYPE) {
-						asm_type *type = dynamic_cast<asm_type*>(stmt.get());
-						std::string symbol(type->get_symbol());
-
-						if (symbol.size() != 0) {
-							m_symbols[symbol].m_type = type->get_type();
-							if (m_symbols[symbol].m_scope == symbol_scope::UNKNOWN) {
-								if (symbol[0] == '.')
-									m_symbols[symbol].m_scope = symbol_scope::LOCAL;
-								else
-									m_symbols[symbol].m_scope = symbol_scope::GLOBAL;
-							}
-						}
-					} else if (stmt->type() == stmt_type::LOCAL ||
-						   stmt->type() == stmt_type::GLOBAL) {
-						std::string symbol;
-
-						stmt->param(0, [&symbol](asm_param& p) {
-							p.token(0, [&symbol](enum token_type t, std::string s) {
-								if (t == token_type::IDENTIFIER)
-									symbol = s;
-							});
-						});
-
-						if (symbol != "") {
-							m_symbols[symbol].m_scope =
-								stmt->type() == stmt_type::LOCAL ?
-								symbol_scope::LOCAL :
-								symbol_scope::GLOBAL;
-						}
-					}
-
-					m_statements.push_back(std::move(stmt));
 				}
+
+				input = it->substr(0, pos);
+				*it   = it->substr(pos);
+
+				std::unique_ptr<asm_statement> stmt = parse_statement(input);
+				if (stmt == nullptr)
+					continue;
+
+				if (stmt->type() == stmt_type::LABEL) {
+					asm_label *label = dynamic_cast<asm_label*>(stmt.get());
+					std::string name = label->get_label();
+
+					// Symbols starting with '.' have local scope only
+					if (is_valid_symbol(name)) {
+						m_symbols[name].m_idx = m_statements.size();
+						if (m_symbols[name].m_scope == symbol_scope::UNKNOWN)
+							m_symbols[name].m_scope = symbol_scope::GLOBAL;
+						if (m_symbols[name].m_type == symbol_type::UNKNOWN)
+							m_symbols[name].m_type = symbol_type::OBJECT;
+					}
+
+				} else if (stmt->type() == stmt_type::TYPE) {
+					asm_type *type = dynamic_cast<asm_type*>(stmt.get());
+					std::string symbol(type->get_symbol());
+
+					if (symbol.size() != 0) {
+						m_symbols[symbol].m_type = type->get_type();
+						if (m_symbols[symbol].m_scope == symbol_scope::UNKNOWN) {
+							if (symbol[0] == '.')
+								m_symbols[symbol].m_scope = symbol_scope::LOCAL;
+							else
+								m_symbols[symbol].m_scope = symbol_scope::GLOBAL;
+						}
+					}
+				} else if (stmt->type() == stmt_type::LOCAL ||
+					   stmt->type() == stmt_type::GLOBAL) {
+					std::string symbol;
+
+					stmt->param(0, [&symbol](asm_param& p) {
+						p.token(0, [&symbol](enum token_type t, std::string s) {
+							if (t == token_type::IDENTIFIER)
+								symbol = s;
+						});
+					});
+
+					if (symbol != "") {
+						m_symbols[symbol].m_scope =
+							stmt->type() == stmt_type::LOCAL ?
+							symbol_scope::LOCAL :
+							symbol_scope::GLOBAL;
+					}
+				}
+
+				m_statements.push_back(std::move(stmt));
 			}
 		}
 	}
@@ -768,6 +766,37 @@ namespace assembly {
 	// Statement parser and helper functions
 	//
 	/////////////////////////////////////////////////////////////////////
+
+	static std::vector<std::string> line_to_statements(std::string line)
+	{
+		std::vector<std::string> split, ret;
+
+		split = split_trim(";", line);
+
+		for (auto it = split.begin(), end = split.end(); it != end; ++it) {
+			// Now check for labels in front of statements;
+			while (*it != "") {
+				std::string input, curr = *it;
+				int pos = curr.size();
+
+
+				for (int i = 0, e = curr.size(); i != e; ++i) {
+					if (!(is_identifier_char(curr[i]) || curr[i] == ':'))
+						break;
+
+					if ((*it)[i] == ':') {
+						pos = i + 1;
+						break;
+					}
+				}
+
+				ret.push_back(trim(it->substr(0, pos)));
+				*it   = it->substr(pos);
+			}
+		}
+
+		return ret;
+	}
 
 	static bool is_valid_symbol(std::string symbol)
 	{
