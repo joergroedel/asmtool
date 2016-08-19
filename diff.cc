@@ -54,6 +54,8 @@ struct diff_chain {
 
 using result_map = std::map<std::string, struct diff_result>;
 
+constexpr auto oflags = assembly::func_flags::STRIP_DEBUG | assembly::func_flags::NORMALIZE;
+
 diff_options::diff_options()
 	: show(false), pretty(false), color(true), context(3)
 { }
@@ -214,18 +216,16 @@ static void compare(const assembly::asm_file &file1,
 	results[fname2].symbol1 = fname1;
 	results[fname2].symbol2 = fname2;
 
-	constexpr auto flags = assembly::func_flags::STRIP_DEBUG | assembly::func_flags::NORMALIZE;
-
 	// We didn't, run compare
 	std::unique_ptr<assembly::asm_object> obj1(nullptr);
 	std::unique_ptr<assembly::asm_object> obj2(nullptr);
 
 	if (type == assembly::symbol_type::FUNCTION) {
-		obj1 = std::unique_ptr<assembly::asm_object>(file1.get_function(fname1, flags));
-		obj2 = std::unique_ptr<assembly::asm_object>(file2.get_function(fname2, flags));
+		obj1 = std::unique_ptr<assembly::asm_object>(file1.get_function(fname1, oflags));
+		obj2 = std::unique_ptr<assembly::asm_object>(file2.get_function(fname2, oflags));
 	} else {
-		obj1 = std::unique_ptr<assembly::asm_object>(file1.get_object(fname1, flags));
-		obj2 = std::unique_ptr<assembly::asm_object>(file2.get_object(fname2, flags));
+		obj1 = std::unique_ptr<assembly::asm_object>(file1.get_object(fname1, oflags));
+		obj2 = std::unique_ptr<assembly::asm_object>(file2.get_object(fname2, oflags));
 	}
 
 	if (obj1 == nullptr || obj2 == nullptr) {
@@ -338,8 +338,6 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 		std::sort(f2_objects.begin(), f2_objects.end());
 
 		// Now check the functions and diff them
-		constexpr auto flags = assembly::func_flags::STRIP_DEBUG | assembly::func_flags::NORMALIZE;
-
 		for (auto it = f2_objects.begin(), end = f2_objects.end(); it != end; ++it) {
 
 			auto obj_type = assembly::symbol_type::FUNCTION;
@@ -359,11 +357,11 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 			std::unique_ptr<assembly::asm_object> fn2(nullptr);
 
 			if (obj_type == assembly::symbol_type::FUNCTION) {
-				fn1 = std::unique_ptr<assembly::asm_object>(file1.get_function(*it, flags));
-				fn2 = std::unique_ptr<assembly::asm_object>(file2.get_function(*it, flags));
+				fn1 = std::unique_ptr<assembly::asm_object>(file1.get_function(*it, oflags));
+				fn2 = std::unique_ptr<assembly::asm_object>(file2.get_function(*it, oflags));
 			} else {
-				fn1 = std::unique_ptr<assembly::asm_object>(file1.get_object(*it, flags));
-				fn2 = std::unique_ptr<assembly::asm_object>(file2.get_object(*it, flags));
+				fn1 = std::unique_ptr<assembly::asm_object>(file1.get_object(*it, oflags));
+				fn2 = std::unique_ptr<assembly::asm_object>(file2.get_object(*it, oflags));
 			}
 
 			if (fn1 == nullptr || fn2 == nullptr)
@@ -459,16 +457,15 @@ void diff_functions(std::string filename1, std::string filename2,
 			throw std::runtime_error(os.str());
 		}
 
-		constexpr auto flags = assembly::func_flags::STRIP_DEBUG | assembly::func_flags::NORMALIZE;
 		std::unique_ptr<assembly::asm_object> obj1(nullptr);
 		std::unique_ptr<assembly::asm_object> obj2(nullptr);
 
 		if (type1 == assembly::symbol_type::FUNCTION) {
-			obj1 = std::unique_ptr<assembly::asm_object>(file1.get_function(objname1, flags));
-			obj2 = std::unique_ptr<assembly::asm_object>(file2.get_function(objname2, flags));
+			obj1 = std::unique_ptr<assembly::asm_object>(file1.get_function(objname1, oflags));
+			obj2 = std::unique_ptr<assembly::asm_object>(file2.get_function(objname2, oflags));
 		} else {
-			obj1 = std::unique_ptr<assembly::asm_object>(file1.get_object(objname1, flags));
-			obj2 = std::unique_ptr<assembly::asm_object>(file2.get_object(objname2, flags));
+			obj1 = std::unique_ptr<assembly::asm_object>(file1.get_object(objname1, oflags));
+			obj2 = std::unique_ptr<assembly::asm_object>(file2.get_object(objname2, oflags));
 		}
 
 		assembly::asm_diff compare(*obj1, *obj2);
