@@ -39,14 +39,15 @@ struct diff_chain;
 using sym_list = std::list<struct diff_chain>;
 
 struct diff_chain {
+	assembly::symbol_type type;
 	std::string symbol1;
 	std::string symbol2;
 	bool flat_diff;
 	bool deep_diff;
 	sym_list list;
 
-	diff_chain(std::string s1, std::string s2)
-		: symbol1(s1), symbol2(s2), flat_diff(true), deep_diff(true)
+	diff_chain(assembly::symbol_type t, std::string s1, std::string s2)
+		: type(t), symbol1(s1), symbol2(s2), flat_diff(true), deep_diff(true)
 	{
 	}
 };
@@ -156,6 +157,7 @@ static void compare(const assembly::asm_file &file1,
 		    const assembly::asm_file &file2,
 		    std::string fname1,
 		    std::string fname2,
+		    enum assembly::symbol_type type,
 		    result_map &results,
 		    struct diff_chain &chain);
 
@@ -168,13 +170,23 @@ static bool compare_symbol_map(const assembly::asm_file &file1,
 	bool ret = true;
 
 	for (auto it = map.begin(), end = map.end(); it != end; ++it) {
-		// Limit comparison to functions for now
-		if (!file1.has_function(it->second) || !file2.has_function(it->first))
+		enum assembly::symbol_type type = assembly::symbol_type::UNKNOWN;
+
+		if (file1.has_function(it->second)) {
+			type = assembly::symbol_type::FUNCTION;
+			if (!file2.has_function(it->first))
+				continue;
+		} else if (file1.has_object(it->second)) {
+			type = assembly::symbol_type::OBJECT;
+			if (!file2.has_object(it->first))
+				continue;
+		} else {
 			continue;
+		}
 
-		struct diff_chain nested(it->second, it->first);
+		struct diff_chain nested(type, it->second, it->first);
 
-		compare(file1, file2, it->second, it->first, results, nested);
+		compare(file1, file2, it->second, it->first, type, results, nested);
 
 		chain.list.push_back(nested);
 
@@ -188,9 +200,11 @@ static void compare(const assembly::asm_file &file1,
 		    const assembly::asm_file &file2,
 		    std::string fname1,
 		    std::string fname2,
+		    enum assembly::symbol_type type,
 		    result_map &results,
 		    struct diff_chain &chain)
 {
+	chain.type = type;
 	// First check if we already compared these functions
 	if (results.find(fname2) != results.end()) {
 		chain.deep_diff = chain.flat_diff = results[fname2].flat_diff;
@@ -203,15 +217,23 @@ static void compare(const assembly::asm_file &file1,
 	constexpr auto flags = assembly::func_flags::STRIP_DEBUG | assembly::func_flags::NORMALIZE;
 
 	// We didn't, run compare
-	std::unique_ptr<assembly::asm_object> fn1(file1.get_function(fname1, flags));
-	std::unique_ptr<assembly::asm_object> fn2(file2.get_function(fname2, flags));
+	std::unique_ptr<assembly::asm_object> obj1(nullptr);
+	std::unique_ptr<assembly::asm_object> obj2(nullptr);
 
-	if (fn1 == nullptr || fn2 == nullptr) {
+	if (type == assembly::symbol_type::FUNCTION) {
+		obj1 = std::unique_ptr<assembly::asm_object>(file1.get_function(fname1, flags));
+		obj2 = std::unique_ptr<assembly::asm_object>(file2.get_function(fname2, flags));
+	} else {
+		obj1 = std::unique_ptr<assembly::asm_object>(file1.get_object(fname1, flags));
+		obj2 = std::unique_ptr<assembly::asm_object>(file2.get_object(fname2, flags));
+	}
+
+	if (obj1 == nullptr || obj2 == nullptr) {
 		results[fname2].flat_diff = false;
 		return;
 	}
 
-	assembly::asm_diff compare(*fn1, *fn2);
+	assembly::asm_diff compare(*obj1, *obj2);
 
 	if (compare.is_different()) {
 		results[fname2].flat_diff = false;
@@ -231,7 +253,7 @@ static void compare(const assembly::asm_file &file1,
 		// returns.
 		chain.deep_diff = true;
 
-		fn2->get_symbol_map(map, *fn2);
+		obj2->get_symbol_map(map, *obj1);
 
 		chain.deep_diff = compare_symbol_map(file1, file2, map, results, chain);
 	}
@@ -241,8 +263,9 @@ void print_diff_chain(struct diff_chain &chain, std::string indent = "")
 {
 	std::cout << indent << "-> " << chain.symbol2;
 	if (chain.symbol1 != chain.symbol2)
-		std::cout << "(was " << chain.symbol1 << ")";
-	std::cout << "[" << (chain.flat_diff ? "=" : "!") << "]" << std::endl;
+		std::cout << " (was " << chain.symbol1 << ")";
+	std::cout << "[" << (chain.type == assembly::symbol_type::FUNCTION ? 'f' : 'o')
+		  << (chain.flat_diff ? "=" : "!") << "]" << std::endl;
 
 	for (auto l = chain.list.begin(), end = chain.list.end(); l != end; ++l) {
 		print_diff_chain(*l, indent + "    ");
@@ -255,7 +278,7 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 	assembly::asm_file file2(fname2);
 
 	try {
-		std::vector<std::string> f1_functions, f2_functions;
+		std::vector<std::string> f1_objects, f2_objects;
 		std::map<std::string, struct diff_result> results;
 
 		file1.load();
@@ -297,35 +320,51 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 		});
 #endif
 
-		// Get function lists from input files
-		file1.for_each_symbol([&f1_functions](std::string symbol, assembly::asm_symbol info) {
+		// Get object lists from input files
+		file1.for_each_symbol([&f1_objects](std::string symbol, assembly::asm_symbol info) {
 			if (!generated_symbol(symbol) &&
-			    info.m_type == assembly::symbol_type::FUNCTION)
-				f1_functions.push_back(symbol);
+			    info.m_type != assembly::symbol_type::UNKNOWN)
+				f1_objects.push_back(symbol);
 		});
 
-		std::sort(f1_functions.begin(), f1_functions.end());
+		std::sort(f1_objects.begin(), f1_objects.end());
 
-		file2.for_each_symbol([&f2_functions](std::string symbol, assembly::asm_symbol info) {
+		file2.for_each_symbol([&f2_objects](std::string symbol, assembly::asm_symbol info) {
 			if (!generated_symbol(symbol) &&
-			    info.m_type == assembly::symbol_type::FUNCTION)
-				f2_functions.push_back(symbol);
+			    info.m_type != assembly::symbol_type::UNKNOWN)
+				f2_objects.push_back(symbol);
 		});
 
-		std::sort(f2_functions.begin(), f2_functions.end());
+		std::sort(f2_objects.begin(), f2_objects.end());
 
 		// Now check the functions and diff them
 		constexpr auto flags = assembly::func_flags::STRIP_DEBUG | assembly::func_flags::NORMALIZE;
 
-		for (auto it = f2_functions.begin(), end = f2_functions.end(); it != end; ++it) {
+		for (auto it = f2_objects.begin(), end = f2_objects.end(); it != end; ++it) {
 
-			if (!binary_search(f1_functions.begin(), f1_functions.end(), *it)) {
-				std::cout << std::setw(20) << "New function: " << *it << std::endl;
+			auto obj_type = assembly::symbol_type::FUNCTION;
+			std::string type_str = " function: ";
+
+			if (file2.has_object(*it)) {
+				obj_type = assembly::symbol_type::OBJECT;
+				type_str = " object: ";
+			}
+
+			if (!binary_search(f1_objects.begin(), f1_objects.end(), *it)) {
+				std::cout << "New" << std::setw(17) << type_str << *it << std::endl;
 				continue;
 			}
 
-			std::unique_ptr<assembly::asm_object> fn1(file1.get_function(*it, flags));
-			std::unique_ptr<assembly::asm_object> fn2(file2.get_function(*it, flags));
+			std::unique_ptr<assembly::asm_object> fn1(nullptr);
+			std::unique_ptr<assembly::asm_object> fn2(nullptr);
+
+			if (obj_type == assembly::symbol_type::FUNCTION) {
+				fn1 = std::unique_ptr<assembly::asm_object>(file1.get_function(*it, flags));
+				fn2 = std::unique_ptr<assembly::asm_object>(file2.get_function(*it, flags));
+			} else {
+				fn1 = std::unique_ptr<assembly::asm_object>(file1.get_object(*it, flags));
+				fn2 = std::unique_ptr<assembly::asm_object>(file2.get_object(*it, flags));
+			}
 
 			if (fn1 == nullptr || fn2 == nullptr)
 				continue;
@@ -338,7 +377,7 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 				results[*it].flat_diff  = false;
 
 				std::cout << std::left;
-				std::cout << std::setw(20) << "Changed function: " << *it << std::endl;
+				std::cout << "Changed" << std::setw(13) << type_str << *it << std::endl;
 
 				if (opts.show)
 					print_diff(*fn1, *fn2, compare, opts);
@@ -346,7 +385,7 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 				// Functions are apparently identical - but the
 				// difference might be in the compiler-generated
 				// symbols they reference.  Check for that.
-				struct diff_chain chain(*it, *it);
+				struct diff_chain chain(obj_type, *it, *it);
 				assembly::symbol_map map;
 
 				results[*it].symbol1 = *it;
@@ -360,7 +399,7 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 					indent << std::left << std::setw(20) << "";
 
 					std::cout << std::left;
-					std::cout << std::setw(20) << "Changed function: " << *it << std::endl;
+					std::cout << "Changed" << std::setw(13) << type_str << *it << std::endl;
 					std::cout << indent.str() << "(Only referenced compiler-generated symbols changed)";
 					std::cout << std::endl;
 					std::cout << indent.str() << "Dependency chain:" << std::endl;
@@ -370,10 +409,14 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 		}
 
 		// Done with the diffs - now search for removed functions
-		for (auto it = f1_functions.begin(), end = f1_functions.end(); it != end; ++it) {
+		for (auto it = f1_objects.begin(), end = f1_objects.end(); it != end; ++it) {
+			std::string type_str = " function: ";
 
-			if (!binary_search(f2_functions.begin(), f2_functions.end(), *it)) {
-				std::cout << std::setw(20) << "Removed function: " << *it << std::endl;
+			if (file1.has_object(*it))
+				type_str = " object: ";
+
+			if (!binary_search(f2_objects.begin(), f2_objects.end(), *it)) {
+				std::cout << "Removed" << std::setw(13) << type_str << *it << std::endl;
 				continue;
 			}
 		}
