@@ -9,8 +9,10 @@
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
+#include <list>
 
 #include <unistd.h>
 
@@ -19,6 +21,7 @@
 #include "helper.h"
 #include "diff.h"
 
+// For caching diff results of individual symbols
 struct diff_result {
 	std::string symbol1;
 	std::string symbol2;
@@ -27,6 +30,24 @@ struct diff_result {
 
 	diff_result()
 		: flat_diff(false), deep_diff(false)
+	{
+	}
+};
+
+// Diff dependency chain
+struct diff_chain;
+
+using sym_list = std::list<struct diff_chain>;
+
+struct diff_chain {
+	std::string symbol1;
+	std::string symbol2;
+	bool flat_diff;
+	bool deep_diff;
+	sym_list list;
+
+	diff_chain(std::string s1, std::string s2)
+		: symbol1(s1), symbol2(s2), flat_diff(true), deep_diff(true)
 	{
 	}
 };
@@ -136,12 +157,14 @@ static void compare(const assembly::asm_file &file1,
 		    const assembly::asm_file &file2,
 		    std::string fname1,
 		    std::string fname2,
-		    result_map &results);
+		    result_map &results,
+		    struct diff_chain &chain);
 
 static bool compare_symbol_map(const assembly::asm_file &file1,
 			       const assembly::asm_file &file2,
 			       assembly::symbol_map &map,
-			       result_map &results)
+			       result_map &results,
+			       struct diff_chain &chain)
 {
 	bool ret = true;
 
@@ -150,10 +173,16 @@ static bool compare_symbol_map(const assembly::asm_file &file1,
 		if (!file1.has_function(it->second) || !file2.has_function(it->first))
 			continue;
 
-		compare(file1, file2, it->second, it->first, results);
+		struct diff_chain nested(it->second, it->first);
+
+		compare(file1, file2, it->second, it->first, results, nested);
+
+		chain.list.push_back(nested);
 
 		ret = ret && results[it->first].deep_diff;
 	}
+
+	chain.deep_diff = ret;
 
 	return ret;
 }
@@ -162,11 +191,14 @@ static void compare(const assembly::asm_file &file1,
 		    const assembly::asm_file &file2,
 		    std::string fname1,
 		    std::string fname2,
-		    result_map &results)
+		    result_map &results,
+		    struct diff_chain &chain)
 {
 	// First check if we already compared these functions
-	if (results.find(fname2) != results.end())
+	if (results.find(fname2) != results.end()) {
+		chain.deep_diff = chain.flat_diff = results[fname2].flat_diff;
 		return;
+	}
 
 	results[fname2].symbol1 = fname1;
 	results[fname2].symbol2 = fname2;
@@ -187,11 +219,16 @@ static void compare(const assembly::asm_file &file1,
 	if (compare.is_different()) {
 		results[fname2].flat_diff = false;
 		results[fname2].deep_diff = false;
+		chain.flat_diff = false;
+		chain.deep_diff = false;
 	} else {
 		assembly::symbol_map map;
 
 		// Flat diff didn't show any differences
 		results[fname2].flat_diff = true;
+
+		chain.flat_diff = true;
+		chain.deep_diff = true;
 
 		// We need to set deep_diff to true here because it might be
 		// used in compare_symbol_map when we have functions that call
@@ -202,7 +239,19 @@ static void compare(const assembly::asm_file &file1,
 
 		fn2->get_symbol_map(map, *fn2);
 
-		results[fname2].deep_diff = compare_symbol_map(file1, file2, map, results);
+		results[fname2].deep_diff = compare_symbol_map(file1, file2, map, results, chain);
+	}
+}
+
+void print_diff_chain(struct diff_chain &chain, std::string indent = "")
+{
+	std::cout << indent << "-> " << chain.symbol2;
+	if (chain.symbol1 != chain.symbol2)
+		std::cout << "(was " << chain.symbol1 << ")";
+	std::cout << "[" << (chain.flat_diff ? "=" : "!") << "]" << std::endl;
+
+	for (auto l = chain.list.begin(), end = chain.list.end(); l != end; ++l) {
+		print_diff_chain(*l, indent + "    ");
 	}
 }
 
@@ -303,6 +352,7 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 				// Functions are apparently identical - but the
 				// difference might be in the compiler-generated
 				// symbols they reference.  Check for that.
+				struct diff_chain chain(*it, *it);
 				assembly::symbol_map map;
 
 				results[*it].symbol1 = *it;
@@ -311,11 +361,16 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 
 				fn2->get_symbol_map(map, *fn2);
 
-				if (!compare_symbol_map(file1, file2, map, results)) {
+				if (!compare_symbol_map(file1, file2, map, results, chain)) {
+					std::ostringstream indent;
+					indent << std::left << std::setw(20) << "";
+
 					std::cout << std::left;
-					std::cout << std::setw(20) << "Changed function: " << *it;
-					std::cout << " (Functions are identical, but referenced compiler-generated symbols changed)";
+					std::cout << std::setw(20) << "Changed function: " << *it << std::endl;
+					std::cout << indent.str() << "(Only referenced compiler-generated symbols changed)";
 					std::cout << std::endl;
+					std::cout << indent.str() << "Dependency chain:" << std::endl;
+					print_diff_chain(chain, indent.str());
 				}
 			}
 		}
