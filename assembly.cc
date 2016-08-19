@@ -726,7 +726,16 @@ namespace assembly {
 						if (m_symbols[name].m_type == symbol_type::UNKNOWN)
 							m_symbols[name].m_type = symbol_type::OBJECT;
 					}
+				} else if (stmt->type() == stmt_type::COMM) {
+					asm_comm *comm = dynamic_cast<asm_comm*>(stmt.get());
+					std::string name = comm->get_symbol();
 
+					if (is_valid_symbol(name)) {
+						m_symbols[name].m_idx	= m_statements.size();
+						m_symbols[name].m_type	= symbol_type::OBJECT;
+						if (m_symbols[name].m_scope == symbol_scope::UNKNOWN)
+							m_symbols[name].m_scope = symbol_scope::GLOBAL;
+					}
 				} else if (stmt->type() == stmt_type::TYPE) {
 					asm_type *type = dynamic_cast<asm_type*>(stmt.get());
 					std::string symbol(type->get_symbol());
