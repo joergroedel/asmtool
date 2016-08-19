@@ -422,7 +422,7 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 		}
 
 	} catch (std::runtime_error &e) {
-		std::cerr << "Failed to diff files: " << e.what() << std::endl;
+		std::cerr << "Error: " << e.what() << std::endl;
 	}
 }
 
