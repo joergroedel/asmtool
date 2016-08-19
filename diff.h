@@ -22,5 +22,7 @@ struct diff_options {
 };
 
 void diff_files(const char*, const char*, struct diff_options&);
+void diff_functions(std::string, std::string, std::string, std::string,
+		    struct diff_options&);
 
 #endif

@@ -117,10 +117,25 @@ static int do_diff(const char *cmd, int argc, char **argv)
 		return 1;
 	}
 
-	std::string fname1 = argv[optind++];
-	std::string fname2 = argv[optind++];
+	std::string filename1 = argv[optind++];
+	std::string filename2 = argv[optind++];
 
-	diff_files(fname1.c_str(), fname2.c_str(), diff_opts);
+	auto pos1 = filename1.find_first_of(":");
+	auto pos2 = filename2.find_first_of(":");
+
+	if (pos1 != std::string::npos && pos2 != std::string::npos) {
+		std::string objname1, objname2;
+
+		objname1  = filename1.substr(pos1 + 1);
+		objname2  = filename2.substr(pos2 + 1);
+		filename1 = filename1.substr(0, pos1);
+		filename2 = filename2.substr(0, pos2);
+
+		diff_functions(filename1, filename2, objname1, objname2, diff_opts);
+	} else {
+		diff_files(filename1.c_str(), filename2.c_str(), diff_opts);
+	}
+
 
 	return 0;
 }

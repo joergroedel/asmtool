@@ -426,3 +426,75 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 	}
 }
 
+void diff_functions(std::string filename1, std::string filename2,
+		    std::string objname1, std::string objname2,
+		    struct diff_options &opts)
+{
+	try {
+		enum assembly::symbol_type type1, type2;
+
+		assembly::asm_file file1(filename1.c_str());
+		assembly::asm_file file2(filename2.c_str());
+
+		file1.load();
+		file2.load();
+
+		type1 = type2 = assembly::symbol_type::UNKNOWN;
+
+		if (file1.has_function(objname1))
+			type1 = assembly::symbol_type::FUNCTION;
+		else if (file1.has_object(objname1))
+			type1 = assembly::symbol_type::OBJECT;
+
+		if (file2.has_function(objname2))
+			type2 = assembly::symbol_type::FUNCTION;
+		else if (file2.has_object(objname2))
+			type2 = assembly::symbol_type::OBJECT;
+
+		if (type1 != type2 || type1 == assembly::symbol_type::UNKNOWN) {
+			std::ostringstream os;
+
+			os << "Unknown or mismatching types: " << objname1 << " vs. " << objname2;
+
+			throw std::runtime_error(os.str());
+		}
+
+		constexpr auto flags = assembly::func_flags::STRIP_DEBUG | assembly::func_flags::NORMALIZE;
+		std::unique_ptr<assembly::asm_object> obj1(nullptr);
+		std::unique_ptr<assembly::asm_object> obj2(nullptr);
+
+		if (type1 == assembly::symbol_type::FUNCTION) {
+			obj1 = std::unique_ptr<assembly::asm_object>(file1.get_function(objname1, flags));
+			obj2 = std::unique_ptr<assembly::asm_object>(file2.get_function(objname2, flags));
+		} else {
+			obj1 = std::unique_ptr<assembly::asm_object>(file1.get_object(objname1, flags));
+			obj2 = std::unique_ptr<assembly::asm_object>(file2.get_object(objname2, flags));
+		}
+
+		assembly::asm_diff compare(*obj1, *obj2);
+
+		if (compare.is_different()) {
+			// Print header of diff
+			if (opts.pretty) {
+				if (objname1.size() >= 40)
+					objname1 = objname1.substr(0, 34) + "[...]";
+
+				if (objname2.size() >= 40)
+					objname2 = objname2.substr(0, 34) + "[...]";
+
+				std::cout << std::left;
+				std::cout << "         " << std::setw(40) << objname1 << "| " << objname2;
+				std::cout << std::endl;
+			} else {
+				std::cout << objname2 << " (was/is " << objname1 << "):" << std::endl;
+			}
+
+			print_diff(*obj1, *obj2, compare, opts);
+		} else {
+			std::cout << filename1 << ":" << objname1 << " and "
+				  << filename2 << ":" << objname2 << " are indentical" << std::endl;
+		}
+	} catch (std::runtime_error &e) {
+		std::cerr << "Error: " << e.what() << std::endl;
+	}
+}
