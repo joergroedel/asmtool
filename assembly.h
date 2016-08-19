@@ -252,13 +252,13 @@ namespace assembly {
 		asm_symbol();
 	};
 
-	class asm_function : public diff::diffable<asm_statement> {
+	class asm_object : public diff::diffable<asm_statement> {
 	protected:
 		std::vector<std::unique_ptr<asm_statement>>	m_statements;
 		std::string					m_name;
 
 	public:
-		asm_function(std::string);
+		asm_object(std::string);
 
 		void add_statement(const std::unique_ptr<asm_statement> &stmt);
 
@@ -269,7 +269,7 @@ namespace assembly {
 		virtual const asm_statement& element(diff::size_type) const;
 
 		std::vector<std::string> get_symbols() const;
-		void get_symbol_map(symbol_map&, const asm_function&) const;
+		void get_symbol_map(symbol_map&, const asm_object&) const;
 	};
 
 	class asm_file {
@@ -287,7 +287,7 @@ namespace assembly {
 		void for_each_symbol(std::function<void(std::string, asm_symbol)>);
 
 		bool has_function(std::string) const;
-		std::unique_ptr<asm_function> get_function(std::string, enum func_flags) const;
+		std::unique_ptr<asm_object> get_function(std::string, enum func_flags) const;
 	};
 
 	using asm_diff = diff::diff<assembly::asm_statement>;

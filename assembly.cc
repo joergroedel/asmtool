@@ -595,39 +595,39 @@ namespace assembly {
 
 	/////////////////////////////////////////////////////////////////////
 	//
-	// Class asm_function
+	// Class asm_object
 	//
 	/////////////////////////////////////////////////////////////////////
 
-	asm_function::asm_function(std::string name)
+	asm_object::asm_object(std::string name)
 		: m_name(name)
 	{
 	}
 
-	void asm_function::add_statement(const std::unique_ptr<asm_statement> &stmt)
+	void asm_object::add_statement(const std::unique_ptr<asm_statement> &stmt)
 	{
 		m_statements.push_back(copy_statement(stmt));
 	}
 
-	void asm_function::for_each_statement(std::function<void(asm_statement&)> handler)
+	void asm_object::for_each_statement(std::function<void(asm_statement&)> handler)
 	{
 		for (auto it = m_statements.begin(), end = m_statements.end(); it != end; ++it)
 			handler(*(*it));
 	}
 
-	diff::size_type asm_function::elements() const
+	diff::size_type asm_object::elements() const
 	{
 		return static_cast<diff::size_type>(m_statements.size());
 	}
 
-	const asm_statement& asm_function::element(diff::size_type idx) const
+	const asm_statement& asm_object::element(diff::size_type idx) const
 	{
 		const asm_statement *ptr = m_statements[idx].get();
 
 		return *ptr;
 	}
 
-	std::vector<std::string> asm_function::get_symbols() const
+	std::vector<std::string> asm_object::get_symbols() const
 	{
 		std::map<std::string, bool> found;
 		std::vector<std::string> symbols;
@@ -655,7 +655,7 @@ namespace assembly {
 		return symbols;
 	}
 
-	void asm_function::get_symbol_map(symbol_map &map, const asm_function &fn) const
+	void asm_object::get_symbol_map(symbol_map &map, const asm_object &fn) const
 	{
 		auto size = m_statements.size();
 		decltype(size) i;
@@ -779,14 +779,14 @@ namespace assembly {
 		return (it->second.m_type == symbol_type::FUNCTION);
 	}
 
-	std::unique_ptr<asm_function> asm_file::get_function(std::string name, enum func_flags flags) const
+	std::unique_ptr<asm_object> asm_file::get_function(std::string name, enum func_flags flags) const
 	{
-		std::unique_ptr<asm_function> fn(nullptr);
+		std::unique_ptr<asm_object> fn(nullptr);
 
 		if (!has_function(name))
 			return fn;
 
-		fn = std::unique_ptr<asm_function>(new asm_function(name));
+		fn = std::unique_ptr<asm_object>(new asm_object(name));
 
 		auto it_sym = m_symbols.find(name);
 		auto it     = m_statements.begin() + it_sym->second.m_idx + 1;

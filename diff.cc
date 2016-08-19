@@ -57,8 +57,8 @@ diff_options::diff_options()
 	: show(false), pretty(false), color(true), context(3)
 { }
 
-static void print_diff_line(assembly::asm_function &fn1,
-			    assembly::asm_function &fn2,
+static void print_diff_line(assembly::asm_object &fn1,
+			    assembly::asm_object &fn2,
 			    diff::diff_element &item,
 			    struct diff_options &opts)
 {
@@ -118,7 +118,7 @@ static void print_diff_line(assembly::asm_function &fn1,
 	std::cout << no_color << std::endl;
 }
 
-static void print_diff(assembly::asm_function &fn1, assembly::asm_function &fn2,
+static void print_diff(assembly::asm_object &fn1, assembly::asm_object &fn2,
 		       assembly::asm_diff &diff, struct diff_options &opts)
 {
 	auto diff_info = diff.get_diff();
@@ -203,8 +203,8 @@ static void compare(const assembly::asm_file &file1,
 	constexpr auto flags = assembly::func_flags::STRIP_DEBUG | assembly::func_flags::NORMALIZE;
 
 	// We didn't, run compare
-	std::unique_ptr<assembly::asm_function> fn1(file1.get_function(fname1, flags));
-	std::unique_ptr<assembly::asm_function> fn2(file2.get_function(fname2, flags));
+	std::unique_ptr<assembly::asm_object> fn1(file1.get_function(fname1, flags));
+	std::unique_ptr<assembly::asm_object> fn2(file2.get_function(fname2, flags));
 
 	if (fn1 == nullptr || fn2 == nullptr) {
 		results[fname2].flat_diff = false;
@@ -324,8 +324,8 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 				continue;
 			}
 
-			std::unique_ptr<assembly::asm_function> fn1(file1.get_function(*it, flags));
-			std::unique_ptr<assembly::asm_function> fn2(file2.get_function(*it, flags));
+			std::unique_ptr<assembly::asm_object> fn1(file1.get_function(*it, flags));
+			std::unique_ptr<assembly::asm_object> fn2(file2.get_function(*it, flags));
 
 			if (fn1 == nullptr || fn2 == nullptr)
 				continue;
