@@ -288,6 +288,9 @@ namespace assembly {
 
 		bool has_function(std::string) const;
 		std::unique_ptr<asm_object> get_function(std::string, enum func_flags) const;
+
+		bool has_object(std::string) const;
+		std::unique_ptr<asm_object> get_object(std::string, enum func_flags) const;
 	};
 
 	using asm_diff = diff::diff<assembly::asm_statement>;

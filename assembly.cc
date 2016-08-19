@@ -858,6 +858,60 @@ namespace assembly {
 		return fn;
 	}
 
+	bool asm_file::has_object(std::string name) const
+	{
+		auto it = m_symbols.find(name);
+		if (it == m_symbols.end())
+			return false;
+
+		return (it->second.m_type == symbol_type::OBJECT);
+	}
+
+	std::unique_ptr<asm_object> asm_file::get_object(std::string name, enum func_flags flags) const
+	{
+		std::unique_ptr<asm_object> obj(nullptr);
+
+		if (!has_object(name))
+			return obj;
+
+		obj = std::unique_ptr<asm_object>(new asm_object(name));
+
+		auto it_sym = m_symbols.find(name);
+		auto it     = m_statements.begin() + it_sym->second.m_idx;
+		auto end    = m_statements.end();
+
+		if ((*it)->type() == stmt_type::COMM) {
+			obj->add_statement(*it);
+			return obj;
+		}
+
+		// Not a .comm object, jump over the label
+		for (it += 1; it != end; it++) {
+			auto type = (*it)->type();
+
+			// Allow debug and datadef statements in objects
+			if (type != stmt_type::DOTFILE && type != stmt_type::LOC &&
+			    type != stmt_type::LABEL   && type != stmt_type::DATADEF)
+				break;
+
+			if (type == stmt_type::LABEL) {
+				// Is it a debug label? Break if not.
+				asm_label *label = dynamic_cast<asm_label*>(it->get());
+				std::string name = label->get_label();
+
+				if (name.size() >= 3 && name.substr(0, 2) == ".L" && isalpha(name[2]))
+					break;
+			}
+
+			if (type != stmt_type::DATADEF && __ff(flags & func_flags::STRIP_DEBUG))
+				continue;
+
+			obj->add_statement(*it);
+		}
+
+		return obj;
+	}
+
 	/////////////////////////////////////////////////////////////////////
 	//
 	// Statement parser and helper functions
