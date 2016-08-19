@@ -26,10 +26,9 @@ struct diff_result {
 	std::string symbol1;
 	std::string symbol2;
 	bool flat_diff;
-	bool deep_diff;
 
 	diff_result()
-		: flat_diff(false), deep_diff(false)
+		: flat_diff(false)
 	{
 	}
 };
@@ -179,10 +178,8 @@ static bool compare_symbol_map(const assembly::asm_file &file1,
 
 		chain.list.push_back(nested);
 
-		ret = ret && results[it->first].deep_diff;
+		ret = ret && nested.deep_diff;
 	}
-
-	chain.deep_diff = ret;
 
 	return ret;
 }
@@ -218,7 +215,6 @@ static void compare(const assembly::asm_file &file1,
 
 	if (compare.is_different()) {
 		results[fname2].flat_diff = false;
-		results[fname2].deep_diff = false;
 		chain.flat_diff = false;
 		chain.deep_diff = false;
 	} else {
@@ -226,20 +222,18 @@ static void compare(const assembly::asm_file &file1,
 
 		// Flat diff didn't show any differences
 		results[fname2].flat_diff = true;
-
 		chain.flat_diff = true;
-		chain.deep_diff = true;
 
 		// We need to set deep_diff to true here because it might be
 		// used in compare_symbol_map when we have functions that call
 		// each other recursivly, so make sure it has a defined value
 		// there. We update it to the real value when compare_symbol_map
 		// returns.
-		results[fname2].deep_diff = true;
+		chain.deep_diff = true;
 
 		fn2->get_symbol_map(map, *fn2);
 
-		results[fname2].deep_diff = compare_symbol_map(file1, file2, map, results, chain);
+		chain.deep_diff = compare_symbol_map(file1, file2, map, results, chain);
 	}
 }
 
