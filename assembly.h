@@ -163,6 +163,8 @@ namespace assembly {
 		void type(enum stmt_type);
 		enum stmt_type type() const;
 
+		std::string raw() const;
+
 		void set_instr(std::string);
 
 		template<typename T> void add_param(T&&);

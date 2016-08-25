@@ -20,7 +20,7 @@
 #include "assembly.h"
 #include "helper.h"
 #include "diff.h"
-
+#include "copy.h"
 
 using namespace std;
 
@@ -29,6 +29,7 @@ void usage(const char *cmd)
 	cout << "Usage: " << cmd << " <subcommand> <options>" << endl;
 	cout << "Available subcommands:" << endl;
 	cout << "        diff - Show changed functions between assembly files" << endl;
+	cout << "        copy - Copy specific symbols out of assembly files" << endl;
 	cout << "        help - Print this message" << endl;
 }
 
@@ -39,6 +40,8 @@ enum {
 	OPTION_DIFF_COLOR,
 	OPTION_DIFF_NO_COLOR,
 	OPTION_DIFF_PRETTY,
+	OPTION_COPY_HELP,
+	OPTION_COPY_OUTPUT,
 };
 
 static struct option diff_options[] = {
@@ -140,6 +143,65 @@ static int do_diff(const char *cmd, int argc, char **argv)
 	return 0;
 }
 
+static struct option copy_options[] = {
+	{ "help",	no_argument,		0, OPTION_COPY_HELP	},
+	{ "output",	required_argument,	0, OPTION_COPY_OUTPUT	},
+};
+
+static void usage_copy(const char *cmd)
+{
+	cout << "Usage: " << cmd << " copy [options] filename [functions...]" << endl;
+	cout << "Options:" << endl;
+	cout << "    --help, -h              - Print this help message" << endl;
+	cout << "    --output, -o <filename> - Destination file, default is stdout" << endl;
+}
+
+static int do_copy(const char *cmd, int argc, char **argv)
+{
+	std::string output_file, input_file;
+	std::vector<std::string> symbols;
+
+	while (true) {
+		int opt_idx, c;
+
+		c = getopt_long(argc, argv, "ho:", copy_options, &opt_idx);
+		if (c == -1)
+			break;
+
+		switch (c) {
+		case OPTION_COPY_HELP:
+		case 'h':
+			usage_copy(cmd);
+			return 0;
+		case OPTION_COPY_OUTPUT:
+		case 'o':
+			output_file = optarg;
+			break;
+		}
+	}
+
+	if (optind + 2 > argc) {
+		std::cerr << "Error: Filename and at least one symbol required" << std::endl;
+		usage_copy(cmd);
+		return 1;
+	}
+
+	input_file = argv[optind++];
+
+	while (optind < argc)
+		symbols.push_back(argv[optind++]);
+
+	if (output_file.length() > 0) {
+		std::ofstream of(output_file.c_str());
+
+		copy_functions(input_file, symbols, of);
+	} else {
+		copy_functions(input_file, symbols, std::cout);
+	}
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	string command;
@@ -154,6 +216,8 @@ int main(int argc, char **argv)
 
 	if (command == "diff")
 		ret = do_diff(argv[0], argc - 1, argv + 1);
+	else if (command == "copy")
+		ret = do_copy(argv[0], argc - 1, argv + 1);
 	else if (command == "help")
 		usage(argv[0]);
 	else {
