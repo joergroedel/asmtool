@@ -589,7 +589,7 @@ namespace assembly {
 	/////////////////////////////////////////////////////////////////////
 
 	asm_symbol::asm_symbol()
-		: m_idx(0), m_type(symbol_type::UNKNOWN), m_scope(symbol_scope::UNKNOWN)
+		: m_idx(0), m_size_idx(0), m_type(symbol_type::UNKNOWN), m_scope(symbol_scope::UNKNOWN)
 	{
 	}
 
@@ -766,6 +766,11 @@ namespace assembly {
 							symbol_scope::LOCAL :
 							symbol_scope::GLOBAL;
 					}
+				} else if (stmt->type() == stmt_type::SIZE) {
+					asm_size *size = dynamic_cast<asm_size*>(stmt.get());
+					std::string symbol(size->get_symbol());
+
+					m_symbols[symbol].m_size_idx = m_statements.size();
 				}
 
 				m_statements.push_back(std::move(stmt));
