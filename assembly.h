@@ -247,6 +247,7 @@ namespace assembly {
 	struct asm_symbol {
 		size_t			m_idx;
 		size_t			m_size_idx;
+		size_t			m_section_idx;
 		enum symbol_type	m_type;
 		enum symbol_scope	m_scope;
 

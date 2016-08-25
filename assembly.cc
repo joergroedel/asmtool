@@ -3,6 +3,7 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <stack>
 #include <map>
 
 #include <ctype.h>
@@ -589,7 +590,8 @@ namespace assembly {
 	/////////////////////////////////////////////////////////////////////
 
 	asm_symbol::asm_symbol()
-		: m_idx(0), m_size_idx(0), m_type(symbol_type::UNKNOWN), m_scope(symbol_scope::UNKNOWN)
+		: m_idx(0), m_size_idx(0), m_section_idx(0),
+		  m_type(symbol_type::UNKNOWN), m_scope(symbol_scope::UNKNOWN)
 	{
 	}
 
@@ -678,6 +680,8 @@ namespace assembly {
 	void asm_file::load()
 	{
 		std::ifstream in(m_filename.c_str());
+		std::stack<size_t> sections;
+		size_t curr_section_idx = 0;
 
 		if (!in.is_open())
 			throw std::runtime_error(std::string("Can't open input file ") + m_filename);
@@ -720,7 +724,8 @@ namespace assembly {
 
 					// Symbols starting with '.' have local scope only
 					if (is_valid_symbol(name)) {
-						m_symbols[name].m_idx = m_statements.size();
+						m_symbols[name].m_idx         = m_statements.size();
+						m_symbols[name].m_section_idx = curr_section_idx;
 						if (m_symbols[name].m_scope == symbol_scope::UNKNOWN)
 							m_symbols[name].m_scope = symbol_scope::GLOBAL;
 						if (m_symbols[name].m_type == symbol_type::UNKNOWN)
@@ -731,8 +736,9 @@ namespace assembly {
 					std::string name = comm->get_symbol();
 
 					if (is_valid_symbol(name)) {
-						m_symbols[name].m_idx	= m_statements.size();
-						m_symbols[name].m_type	= symbol_type::OBJECT;
+						m_symbols[name].m_idx         = m_statements.size();
+						m_symbols[name].m_section_idx = curr_section_idx;
+						m_symbols[name].m_type        = symbol_type::OBJECT;
 						if (m_symbols[name].m_scope == symbol_scope::UNKNOWN)
 							m_symbols[name].m_scope = symbol_scope::GLOBAL;
 					}
@@ -771,6 +777,20 @@ namespace assembly {
 					std::string symbol(size->get_symbol());
 
 					m_symbols[symbol].m_size_idx = m_statements.size();
+				} else if (stmt->type() == stmt_type::TEXT ||
+					   stmt->type() == stmt_type::DATA ||
+					   stmt->type() == stmt_type::BSS  ||
+					   stmt->type() == stmt_type::SECTION) {
+					curr_section_idx = m_statements.size();
+				} else if (stmt->type() == stmt_type::PUSHSECTION) {
+					sections.push(curr_section_idx);
+				} else if (stmt->type() == stmt_type::POPSECTION) {
+					if (sections.empty()) {
+						std::cerr << "Warning: .popsection on empty stack" << std::endl;
+					} else {
+						curr_section_idx = sections.top();
+						sections.pop();
+					}
 				}
 
 				m_statements.push_back(std::move(stmt));
