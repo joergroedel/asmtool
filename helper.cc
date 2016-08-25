@@ -134,3 +134,13 @@ string expand_tab(string input)
 
 	return input;
 }
+
+std::string base_name(std::string fname)
+{
+	auto pos = fname.find_last_of("/");
+
+	if (pos != std::string::npos)
+		fname = fname.substr(pos + 1);
+
+	return fname;
+}

@@ -488,8 +488,8 @@ void diff_functions(std::string filename1, std::string filename2,
 
 			print_diff(*obj1, *obj2, compare, opts);
 		} else {
-			std::cout << filename1 << ":" << objname1 << " and "
-				  << filename2 << ":" << objname2 << " are indentical" << std::endl;
+			std::cout << base_name(filename1) << ":" << objname1 << " and "
+				  << base_name(filename2) << ":" << objname2 << " are indentical" << std::endl;
 		}
 	} catch (std::runtime_error &e) {
 		std::cerr << "Error: " << e.what() << std::endl;
