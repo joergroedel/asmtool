@@ -733,8 +733,12 @@ namespace assembly {
 						m_symbols[name].m_section_idx = curr_section_idx;
 						if (curr_align_idx)
 							m_symbols[name].m_align_idx = curr_align_idx;
-						if (m_symbols[name].m_scope == symbol_scope::UNKNOWN)
+						if (m_symbols[name].m_scope == symbol_scope::UNKNOWN &&
+						    name[0] != '.')
 							m_symbols[name].m_scope = symbol_scope::GLOBAL;
+						if (m_symbols[name].m_scope == symbol_scope::UNKNOWN &&
+						    name[0] == '.')
+							m_symbols[name].m_scope = symbol_scope::LOCAL;
 						if (m_symbols[name].m_type == symbol_type::UNKNOWN)
 							m_symbols[name].m_type = symbol_type::OBJECT;
 					}
@@ -1015,7 +1019,7 @@ namespace assembly {
 		if (symbol.size() == 0)
 			return false;
 
-		return ((symbol[0] != '.') && !isdigit(symbol[0]));
+		return !isdigit(symbol[0]);
 	}
 
 	static bool is_identifier_char(char c)
