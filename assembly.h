@@ -288,7 +288,12 @@ namespace assembly {
 
 		void load();
 
+		const asm_statement& stmt(unsigned) const;
+
 		void for_each_symbol(std::function<void(std::string, asm_symbol)>);
+
+		bool has_symbol(std::string) const;
+		const asm_symbol& get_symbol(std::string) const;
 
 		bool has_function(std::string) const;
 		std::unique_ptr<asm_object> get_function(std::string, enum func_flags) const;

@@ -802,10 +802,30 @@ namespace assembly {
 		}
 	}
 
+	const asm_statement& asm_file::stmt(unsigned idx) const
+	{
+		return *m_statements[idx];
+	}
+
 	void asm_file::for_each_symbol(std::function<void(std::string, asm_symbol)> handler)
 	{
 		for (auto it = m_symbols.begin(), end = m_symbols.end(); it != end; ++it)
 			handler(it->first, it->second);
+	}
+
+	bool asm_file::has_symbol(std::string symbol) const
+	{
+		return m_symbols.find(symbol) != m_symbols.end();
+	}
+
+	const asm_symbol& asm_file::get_symbol(std::string symbol) const
+	{
+		auto s = m_symbols.find(symbol);
+
+		if (s == m_symbols.end())
+			throw std::runtime_error("No such symbol: " + symbol);
+
+		return s->second;
 	}
 
 	bool asm_file::has_function(std::string symbol) const
