@@ -15,8 +15,17 @@ static void copy_symbol(const std::string &symbol,
 		return;
 	}
 
+	auto func = std::unique_ptr<assembly::asm_object>(nullptr);
 	auto sym  = file.get_symbol(symbol);
-	auto func = file.get_function(symbol, assembly::func_flags::STRIP_DEBUG);
+
+	if (file.has_function(symbol)) {
+		func = file.get_function(symbol, assembly::func_flags::STRIP_DEBUG);
+	} else if (file.has_object(symbol)) {
+		func = file.get_object(symbol, assembly::func_flags::STRIP_DEBUG);
+	} else {
+		std::cerr << "Symbol not found: " << symbol << std::endl;
+		return;
+	}
 
 	if (sym.m_section_idx)
 		os << '\t' << file.stmt(sym.m_section_idx).raw() << std::endl;
@@ -56,8 +65,11 @@ void copy_functions(const std::string &filename,
 	file.load();
 
 	for (auto fn : symbols) {
-		if (!file.has_function(fn))
+
+		if (!file.has_function(fn)) {
 			std::cerr << "Function not found: " << fn << std::endl;
+			continue;
+		}
 
 		auto func = file.get_function(fn, assembly::func_flags::STRIP_DEBUG);
 		std::vector<std::string> syms = func->get_symbols();
