@@ -250,6 +250,8 @@ namespace assembly {
 		size_t			m_idx;
 		size_t			m_size_idx;
 		size_t			m_section_idx;
+		size_t			m_align_idx;
+		size_t			m_type_idx;
 		enum symbol_type	m_type;
 		enum symbol_scope	m_scope;
 

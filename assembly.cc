@@ -38,7 +38,7 @@ namespace assembly {
 		{ .str = ".zero",			.type = stmt_type::DATADEF		},
 		{ .str = ".size",			.type = stmt_type::SIZE			},
 		{ .str = ".align",			.type = stmt_type::ALIGN		},
-		{ .str = ".p2align",			.type = stmt_type::P2ALIGN		},
+		{ .str = ".p2align",			.type = stmt_type::ALIGN		},
 		{ .str = ".comm",			.type = stmt_type::COMM			},
 		{ .str = ".lcomm",			.type = stmt_type::LCOMM		},
 		{ .str = ".popsection",			.type = stmt_type::POPSECTION		},
@@ -56,7 +56,7 @@ namespace assembly {
 		{ .str = ".cfi_def_cfa",		.type = stmt_type::CFI_DEF_CFA		},
 		{ .str = ".cfi_sections",		.type = stmt_type::CFI_SECTIONS		},
 		{ .str = ".cfi_escape",			.type = stmt_type::CFI_ESCAPE		},
-		{ .str = ".balign",			.type = stmt_type::BALIGN		},
+		{ .str = ".balign",			.type = stmt_type::ALIGN		},
 		{ .str = ".weak",			.type = stmt_type::WEAK			},
 		{ .str = ".value",			.type = stmt_type::VALUE		},
 		{ .str = ".uleb128",			.type = stmt_type::ULEB128		},
@@ -594,7 +594,7 @@ namespace assembly {
 	/////////////////////////////////////////////////////////////////////
 
 	asm_symbol::asm_symbol()
-		: m_idx(0), m_size_idx(0), m_section_idx(0),
+		: m_idx(0), m_size_idx(0), m_section_idx(0), m_align_idx(0), m_type_idx(0),
 		  m_type(symbol_type::UNKNOWN), m_scope(symbol_scope::UNKNOWN)
 	{
 	}
@@ -686,6 +686,7 @@ namespace assembly {
 		std::ifstream in(m_filename.c_str());
 		std::stack<size_t> sections;
 		size_t curr_section_idx = 0;
+		size_t curr_align_idx = 0;
 
 		if (!in.is_open())
 			throw std::runtime_error(std::string("Can't open input file ") + m_filename);
@@ -730,6 +731,8 @@ namespace assembly {
 					if (is_valid_symbol(name)) {
 						m_symbols[name].m_idx         = m_statements.size();
 						m_symbols[name].m_section_idx = curr_section_idx;
+						if (curr_align_idx)
+							m_symbols[name].m_align_idx = curr_align_idx;
 						if (m_symbols[name].m_scope == symbol_scope::UNKNOWN)
 							m_symbols[name].m_scope = symbol_scope::GLOBAL;
 						if (m_symbols[name].m_type == symbol_type::UNKNOWN)
@@ -743,15 +746,20 @@ namespace assembly {
 						m_symbols[name].m_idx         = m_statements.size();
 						m_symbols[name].m_section_idx = curr_section_idx;
 						m_symbols[name].m_type        = symbol_type::OBJECT;
+						if (curr_align_idx)
+							m_symbols[name].m_align_idx = curr_align_idx;
 						if (m_symbols[name].m_scope == symbol_scope::UNKNOWN)
 							m_symbols[name].m_scope = symbol_scope::GLOBAL;
 					}
+					// .comm statements change location pointer
+					curr_align_idx = 0;
 				} else if (stmt->type() == stmt_type::TYPE) {
 					asm_type *type = dynamic_cast<asm_type*>(stmt.get());
 					std::string symbol(type->get_symbol());
 
 					if (symbol.size() != 0) {
 						m_symbols[symbol].m_type = type->get_type();
+						m_symbols[symbol].m_type_idx = m_statements.size();
 						if (m_symbols[symbol].m_scope == symbol_scope::UNKNOWN) {
 							if (symbol[0] == '.')
 								m_symbols[symbol].m_scope = symbol_scope::LOCAL;
@@ -795,6 +803,10 @@ namespace assembly {
 						curr_section_idx = sections.top();
 						sections.pop();
 					}
+				} else if (stmt->type() == stmt_type::ALIGN) {
+					curr_align_idx = m_statements.size();
+				} else {
+					curr_align_idx = 0;
 				}
 
 				m_statements.push_back(std::move(stmt));

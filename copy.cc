@@ -21,6 +21,12 @@ static void copy_symbol(const std::string &symbol,
 	if (sym.m_section_idx)
 		os << '\t' << file.stmt(sym.m_section_idx).raw() << std::endl;
 
+	if (sym.m_align_idx)
+		os << '\t' << file.stmt(sym.m_align_idx).raw() << std::endl;
+
+	if (sym.m_type_idx)
+		os << '\t' << file.stmt(sym.m_type_idx).raw() << std::endl;
+
 	if (sym.m_type == assembly::symbol_type::OBJECT && sym.m_size_idx)
 		os << '\t' << file.stmt(sym.m_size_idx).raw() << std::endl;
 
