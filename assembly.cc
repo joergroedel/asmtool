@@ -641,22 +641,38 @@ namespace assembly {
 		// Keep the symbols in a map first to filter out duplicates
 		for (auto it = m_statements.begin(), end = m_statements.end();
 		     it != end; ++it) {
+
+			if ((*it)->type() == stmt_type::LABEL) {
+				asm_label *label = dynamic_cast<asm_label*>((*it).get());
+
+				// Ignore in-function labels in the symbol-array
+				found[label->get_label()] = false;
+				continue;
+			}
+
 			if ((*it)->type() != stmt_type::INSTRUCTION &&
 			    (*it)->type() != stmt_type::DATADEF)
 				continue;
 
+
 			(*it)->for_each_param([&found](const asm_param &p) {
 				p.for_each_token([&found](const asm_token &t) {
+
 					if (t.type() != token_type::IDENTIFIER)
 						return;
-					found[t.token()] = true;
+
+					// Don't overwrite 'false' values
+					if (found.find(t.token()) == found.end())
+						found[t.token()] = true;
 				});
 			});
 		}
 
 		// Now copy the symbols into the vector
-		for (auto it = found.begin(), end = found.end(); it != end; ++it)
-			symbols.push_back(it->first);
+		for (auto it : found) {
+			if (it.second)
+				symbols.push_back(it.first);
+		}
 
 		return symbols;
 	}
