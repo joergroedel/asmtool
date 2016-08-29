@@ -701,6 +701,7 @@ namespace assembly {
 	{
 		std::ifstream in(m_filename.c_str());
 		std::stack<size_t> sections;
+		std::map<std::string, size_t> first_sec; // Where the section was first seen
 		size_t curr_section_idx = 0;
 		size_t curr_align_idx = 0;
 
@@ -813,7 +814,17 @@ namespace assembly {
 					   stmt->type() == stmt_type::DATA ||
 					   stmt->type() == stmt_type::BSS  ||
 					   stmt->type() == stmt_type::SECTION) {
-					curr_section_idx = m_statements.size();
+					if (stmt->type() == stmt_type::SECTION) {
+						asm_section *sec = dynamic_cast<asm_section*>(stmt.get());
+						std::string secname = sec->get_name();
+
+						if (first_sec.find(secname) == first_sec.end())
+							first_sec[secname] = m_statements.size();
+
+						curr_section_idx = first_sec[secname];
+					} else {
+						curr_section_idx = m_statements.size();
+					}
 				} else if (stmt->type() == stmt_type::PUSHSECTION) {
 					sections.push(curr_section_idx);
 				} else if (stmt->type() == stmt_type::POPSECTION) {
