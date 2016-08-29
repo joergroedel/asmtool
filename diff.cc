@@ -268,7 +268,8 @@ void print_diff_chain(struct diff_chain &chain, std::string indent = "")
 		  << (chain.flat_diff ? "=" : "!") << "]" << std::endl;
 
 	for (auto l = chain.list.begin(), end = chain.list.end(); l != end; ++l) {
-		print_diff_chain(*l, indent + "    ");
+		if (l->deep_diff == false)
+			print_diff_chain(*l, indent + "    ");
 	}
 }
 
