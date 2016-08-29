@@ -90,13 +90,12 @@ void copy_functions(const std::string &filename,
 		}
 
 		copy_symbol(fn, file, os);
-	}
-
-
-	for (auto fn : functions) {
-		copy_symbol(fn, file, os);
 		os << "\t.globl " << fn << std::endl;
 	}
+
+
+	for (auto fn : functions)
+		copy_symbol(fn, file, os);
 
 	for (auto obj : objects)
 		copy_symbol(obj, file, os);
