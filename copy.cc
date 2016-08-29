@@ -47,11 +47,6 @@ static void copy_symbol(const std::string &symbol,
 
 	if (sym.m_type == assembly::symbol_type::FUNCTION && sym.m_size_idx)
 		os << '\t' << file.stmt(sym.m_size_idx).raw() << std::endl;
-
-	// TODO:
-	//   * Alignment handling
-	//   * .type handling
-
 }
 
 void copy_functions(const std::string &filename,
