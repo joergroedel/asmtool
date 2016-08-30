@@ -277,6 +277,7 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 {
 	assembly::asm_file file1(fname1);
 	assembly::asm_file file2(fname2);
+	bool changes = false;
 
 	try {
 		std::vector<std::string> f1_objects, f2_objects;
@@ -314,6 +315,7 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 			}
 
 			if (!binary_search(f1_objects.begin(), f1_objects.end(), *it)) {
+				changes = true;
 				std::cout << "New" << std::setw(17) << type_str << *it << std::endl;
 				continue;
 			}
@@ -335,6 +337,8 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 			assembly::asm_diff compare(*fn1, *fn2);
 
 			if (compare.is_different()) {
+				changes = true;
+
 				results[*it].symbol1 = *it;
 				results[*it].symbol2 = *it;
 				results[*it].flat_diff  = false;
@@ -361,6 +365,8 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 					std::ostringstream indent;
 					indent << std::left << std::setw(20) << "";
 
+					changes = true;
+
 					std::cout << std::left;
 					std::cout << "Changed" << std::setw(13) << type_str << *it << std::endl;
 					std::cout << indent.str() << "(Only referenced compiler-generated symbols changed)";
@@ -379,10 +385,14 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 				type_str = " object: ";
 
 			if (!binary_search(f2_objects.begin(), f2_objects.end(), *it)) {
+				changes = true;
 				std::cout << "Removed" << std::setw(13) << type_str << *it << std::endl;
 				continue;
 			}
 		}
+
+		if (!changes)
+			std::cout << "Nothing changed between files" << std::endl;
 
 	} catch (std::runtime_error &e) {
 		std::cerr << "Error: " << e.what() << std::endl;
