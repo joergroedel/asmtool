@@ -121,3 +121,19 @@ void print_symbol_info(const char *filename, struct info_options opts)
 			{ return s.m_type == assembly::symbol_type::OBJECT &&
 				 s.m_scope == assembly::symbol_scope::LOCAL; });
 }
+
+void print_one_symbol_info(const char *filename, std::string fn_name)
+{
+	assembly::asm_file file(filename);
+
+	file.load();
+
+	if (!file.has_function(fn_name)) {
+		std::cerr << "No such function: " << fn_name << std::endl;
+		return;
+	}
+
+	auto info = file.get_symbol(fn_name);
+
+	print_one_symbol(file, fn_name, info, true);
+}

@@ -18,5 +18,6 @@ struct info_options {
 };
 
 void print_symbol_info(const char*, struct info_options);
+void print_one_symbol_info(const char*, std::string);
 
 #endif

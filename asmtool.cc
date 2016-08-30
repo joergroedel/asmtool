@@ -303,7 +303,10 @@ static int do_info(const char *cmd, int argc, char **argv)
 		filename     = filename.substr(0, pos);
 	}
 
-	print_symbol_info(filename.c_str(), opts);
+	if (opts.fn_name == "")
+		print_symbol_info(filename.c_str(), opts);
+	else
+		print_one_symbol_info(filename.c_str(), opts.fn_name);
 
 	return 0;
 }
