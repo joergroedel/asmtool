@@ -29,6 +29,7 @@ void usage(const char *cmd)
 	std::cout << "Available subcommands:" << std::endl;
 	std::cout << "        diff - Show changed functions between assembly files" << std::endl;
 	std::cout << "        copy - Copy specific symbols out of assembly files" << std::endl;
+	std::cout << "        info - Print info about symbols in an assembly file" << std::endl;
 	std::cout << "        help - Print this message" << std::endl;
 }
 
