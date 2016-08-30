@@ -49,6 +49,7 @@ enum {
 	OPTION_INFO_OBJECTS,
 	OPTION_INFO_GLOBAL,
 	OPTION_INFO_LOCAL,
+	OPTION_INFO_ALL,
 };
 
 static struct option diff_options[] = {
@@ -216,6 +217,7 @@ static struct option info_options[] = {
 	{ "objects",	no_argument,		0, OPTION_INFO_OBJECTS		},
 	{ "global",	no_argument,		0, OPTION_INFO_GLOBAL		},
 	{ "local",	no_argument,		0, OPTION_INFO_LOCAL		},
+	{ "all",	no_argument,		0, OPTION_INFO_ALL		},
 	{ 0,		0,			0, 0				}
 };
 
@@ -229,6 +231,7 @@ static void usage_info(const char *cmd)
 	cout << "    --objects, -o      - Print object-type symbols" << endl;
 	cout << "    --global, -g       - Print global symbols (default)" << endl;
 	cout << "    --local, -l        - Print local symbols" << endl;
+	cout << "    --all, -a          - Print all symbols" << endl;
 }
 
 static int do_info(const char *cmd, int argc, char **argv)
@@ -240,7 +243,7 @@ static int do_info(const char *cmd, int argc, char **argv)
 	while (true) {
 		int opt_idx, c;
 
-		c = getopt_long(argc, argv, "hvfogl", info_options, &opt_idx);
+		c = getopt_long(argc, argv, "hvfogla", info_options, &opt_idx);
 		if (c == -1)
 			break;
 
@@ -270,6 +273,11 @@ static int do_info(const char *cmd, int argc, char **argv)
 		case 'l':
 			opts.global = false;
 			opts.local  = true;
+			break;
+		case OPTION_INFO_ALL:
+		case 'a':
+			opts.global = opts.local = true;
+			opts.functions = opts.objects = true;
 			break;
 		}
 	}
