@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2015-2016 SUSE Linux GmbH
+ *
+ * All rights reserved.
+ *
+ * Author: Joerg Roedel <jroedel@suse.de>
+ */
+
 #include <iostream>
 #include <iomanip>
 #include <vector>

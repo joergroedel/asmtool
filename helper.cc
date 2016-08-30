@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 SUSE Linux GmbH
+ * Copyright (c) 2015-2016 SUSE Linux GmbH
  *
  * All rights reserved.
  *
