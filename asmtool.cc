@@ -156,6 +156,7 @@ static int do_diff(const char *cmd, int argc, char **argv)
 static struct option copy_options[] = {
 	{ "help",	no_argument,		0, OPTION_COPY_HELP	},
 	{ "output",	required_argument,	0, OPTION_COPY_OUTPUT	},
+	{ 0,		0,			0, 0			}
 };
 
 static void usage_copy(const char *cmd)
