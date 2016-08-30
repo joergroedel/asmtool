@@ -29,20 +29,19 @@ static void print_symbols(assembly::asm_file &file, struct info_options &opts,
 
 		switch (info.m_type) {
 		case assembly::symbol_type::FUNCTION:
-			type = "Function";
+			type = "Function:";
 			break;
 		case assembly::symbol_type::OBJECT:
-			type = "Object";
+			type = "Object:";
 			break;
 		default:
-			type = "Unknown";
+			type = "Unknown:";
 			break;
 		}
 
 		std::cout << std::left;
-		std::cout << "Symbol: " << std::setw(48) << sym;
-		std::cout << " Scope: " << std::setw(10) << scope;
-		std::cout << " Type: "  << std::setw(10) << type << std::endl;
+		std::cout << std::setw(10) << type << std::setw(48) << sym;
+		std::cout << " Scope: " << std::setw(10) << scope << std::endl;
 	});
 }
 
