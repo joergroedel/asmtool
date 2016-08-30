@@ -355,7 +355,7 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 				results[*it].symbol2 = *it;
 				results[*it].flat_diff = true;
 
-				fn2->get_symbol_map(map, *fn2);
+				fn2->get_symbol_map(map, *fn1);
 
 				if (!compare_symbol_map(file1, file2, map, results, chain)) {
 					std::ostringstream indent;
