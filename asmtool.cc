@@ -21,6 +21,7 @@
 #include "helper.h"
 #include "diff.h"
 #include "copy.h"
+#include "info.h"
 
 using namespace std;
 
@@ -205,15 +206,6 @@ static int do_copy(const char *cmd, int argc, char **argv)
 	return 0;
 }
 
-struct info_options {
-	bool local;
-	bool verbose;
-
-	info_options()
-		: local(false), verbose(false)
-	{ }
-};
-
 static struct option info_options[] = {
 	{ "help",	no_argument,		0, OPTION_INFO_HELP	},
 	{ "verbose",	no_argument,		0, OPTION_INFO_VERBOSE	},
@@ -269,9 +261,11 @@ static int do_info(const char *cmd, int argc, char **argv)
 	auto pos = filename.find_first_of(":");
 
 	if (pos != std::string::npos) {
-		fn_name  = filename.substr(pos + 1);
-		filename = filename.substr(0, pos);
+		opts.fn_name = filename.substr(pos + 1);
+		filename     = filename.substr(0, pos);
 	}
+
+	print_symbol_info(filename.c_str(), opts);
 
 	return 0;
 }
