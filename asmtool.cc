@@ -22,6 +22,7 @@
 #include "diff.h"
 #include "copy.h"
 #include "info.h"
+#include "show.h"
 
 void usage(const char *cmd)
 {
@@ -30,6 +31,7 @@ void usage(const char *cmd)
 	std::cout << "        diff - Show changed functions between assembly files" << std::endl;
 	std::cout << "        copy - Copy specific symbols out of assembly files" << std::endl;
 	std::cout << "        info - Print info about symbols in an assembly file" << std::endl;
+	std::cout << "        show - Print assembly of a symbol as parsed by the tool" << std::endl;
 	std::cout << "        help - Print this message" << std::endl;
 }
 
@@ -49,6 +51,7 @@ enum {
 	OPTION_INFO_GLOBAL,
 	OPTION_INFO_LOCAL,
 	OPTION_INFO_ALL,
+	OPTION_SHOW_HELP,
 };
 
 static struct option diff_options[] = {
@@ -310,6 +313,69 @@ static int do_info(const char *cmd, int argc, char **argv)
 	return 0;
 }
 
+static struct option show_options[] = {
+	{ "help",	no_argument,		0, OPTION_INFO_HELP		},
+	{ 0,		0,			0, 0				}
+};
+
+static void usage_show(const char *cmd)
+{
+	std::cout << "Usage: " << cmd << " show [options] filename symbol" << std::endl;
+	std::cout << "Options:" << std::endl;
+	std::cout << "    --help, -h         - Print this help message" << std::endl;
+}
+
+static int do_show(const char *cmd, int argc, char **argv)
+{
+	std::string filename, sym;
+
+	while (true) {
+		int opt_idx, c;
+
+		c = getopt_long(argc, argv, "h", show_options, &opt_idx);
+		if (c == -1)
+			break;
+
+		switch (c) {
+		case OPTION_INFO_HELP:
+		case 'h':
+			usage_show(cmd);
+			return 0;
+		default:
+			usage_show(cmd);
+			return 1;
+		}
+	}
+
+	if (optind + 1 > argc) {
+		std::cerr << "Error: Filename and symbol required" << std::endl;
+		usage_show(cmd);
+		return 1;
+	}
+
+	filename = argv[optind++];
+
+	if (optind < argc)
+		sym = argv[optind++];
+
+	auto pos = filename.find_first_of(":");
+
+	if (sym == "" && pos != std::string::npos) {
+		sym = filename.substr(pos + 1);
+		filename = filename.substr(0, pos);
+	}
+
+	if (sym == "") {
+		std::cerr << "Error: Symbol name required" << std::endl;
+		usage_show(cmd);
+		return 1;
+	}
+
+	show_symbol(filename.c_str(), sym);
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	std::string command;
@@ -328,6 +394,8 @@ int main(int argc, char **argv)
 		ret = do_copy(argv[0], argc - 1, argv + 1);
 	else if (command == "info")
 		ret = do_info(argv[0], argc - 1, argv + 1);
+	else if (command == "show")
+		ret = do_show(argv[0], argc - 1, argv + 1);
 	else if (command == "help")
 		usage(argv[0]);
 	else {
