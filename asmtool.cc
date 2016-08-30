@@ -42,6 +42,9 @@ enum {
 	OPTION_DIFF_PRETTY,
 	OPTION_COPY_HELP,
 	OPTION_COPY_OUTPUT,
+	OPTION_INFO_HELP,
+	OPTION_INFO_VERBOSE,
+	OPTION_INFO_LOCAL,
 };
 
 static struct option diff_options[] = {
@@ -202,6 +205,77 @@ static int do_copy(const char *cmd, int argc, char **argv)
 	return 0;
 }
 
+struct info_options {
+	bool local;
+	bool verbose;
+
+	info_options()
+		: local(false), verbose(false)
+	{ }
+};
+
+static struct option info_options[] = {
+	{ "help",	no_argument,		0, OPTION_INFO_HELP	},
+	{ "verbose",	no_argument,		0, OPTION_INFO_VERBOSE	},
+	{ "local",	no_argument,		0, OPTION_INFO_LOCAL	},
+	{ 0,		0,			0, 0			}
+};
+
+static void usage_info(const char *cmd)
+{
+	cout << "Usage: " << cmd << " info [options] filename[:function]" << endl;
+	cout << "Options:" << endl;
+	cout << "    --help, -h   - Print this help message" << endl;
+	cout << "    --verbose    - Print symbols referenced by each function" << endl;
+	cout << "    --local      - Print also local symbols" << endl;
+}
+
+static int do_info(const char *cmd, int argc, char **argv)
+{
+	std::string filename, fn_name;
+	struct info_options opts;
+
+	while (true) {
+		int opt_idx, c;
+
+		c = getopt_long(argc, argv, "vl", info_options, &opt_idx);
+		if (c == -1)
+			break;
+
+		switch (c) {
+		case OPTION_INFO_HELP:
+		case 'h':
+			usage_info(cmd);
+			return 0;
+		case OPTION_INFO_VERBOSE:
+		case 'v':
+			opts.verbose = true;
+			break;
+		case OPTION_INFO_LOCAL:
+		case 'l':
+			opts.local = true;
+			break;
+		}
+	}
+
+	if (optind + 1 > argc) {
+		std::cerr << "Error: Filename required" << std::endl;
+		usage_copy(cmd);
+		return 1;
+	}
+
+	filename = argv[optind++];
+
+	auto pos = filename.find_first_of(":");
+
+	if (pos != std::string::npos) {
+		fn_name  = filename.substr(pos + 1);
+		filename = filename.substr(0, pos);
+	}
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	string command;
@@ -218,6 +292,8 @@ int main(int argc, char **argv)
 		ret = do_diff(argv[0], argc - 1, argv + 1);
 	else if (command == "copy")
 		ret = do_copy(argv[0], argc - 1, argv + 1);
+	else if (command == "info")
+		ret = do_info(argv[0], argc - 1, argv + 1);
 	else if (command == "help")
 		usage(argv[0]);
 	else {
