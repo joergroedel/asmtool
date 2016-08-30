@@ -283,6 +283,8 @@ namespace assembly {
 		std::map<std::string, asm_symbol>		m_symbols;
 		std::string					m_filename;
 
+		void cleanup_symbol_table();
+
 	public:
 		template<typename T> inline asm_file(T&& fn)
 			: m_filename(std::forward<T>(fn))

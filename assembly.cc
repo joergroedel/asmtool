@@ -5,6 +5,7 @@
 #include <vector>
 #include <stack>
 #include <map>
+#include <set>
 
 #include <ctype.h>
 
@@ -697,6 +698,33 @@ namespace assembly {
 	//
 	/////////////////////////////////////////////////////////////////////
 
+	void asm_file::cleanup_symbol_table()
+	{
+		// We remove label-only symbols, which are labels within
+		// functions
+		std::set<std::string> labels;
+
+		for (auto &sym : m_symbols) {
+			if (sym.second.m_type != symbol_type::FUNCTION)
+				continue;
+
+			auto fn = get_function(sym.first, func_flags::NONE);
+			if (fn == nullptr)
+				continue;
+
+			fn->for_each_statement([&labels](asm_statement &stmt) {
+				if (stmt.type() != stmt_type::LABEL)
+					return;
+
+				asm_label *label = dynamic_cast<asm_label*>(&stmt);
+				labels.insert(label->get_label());
+			});
+		}
+
+		for (auto item : labels)
+			m_symbols.erase(item);
+	}
+
 	void asm_file::load()
 	{
 		std::ifstream in(m_filename.c_str());
@@ -843,6 +871,8 @@ namespace assembly {
 				m_statements.push_back(std::move(stmt));
 			}
 		}
+
+		cleanup_symbol_table();
 	}
 
 	const asm_statement& asm_file::stmt(unsigned idx) const
