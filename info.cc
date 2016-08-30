@@ -5,18 +5,14 @@
 #include "assembly.h"
 #include "info.h"
 
-void print_symbol_info(const char *filename, struct info_options opts)
+static void print_symbols(assembly::asm_file &file, struct info_options &opts,
+			  std::function<bool(assembly::asm_symbol&)> filter)
 {
-	assembly::asm_file file(filename);
-
-	file.load();
-
-	file.for_each_symbol([&opts](std::string sym, assembly::asm_symbol info) {
+	file.for_each_symbol([&opts, &filter](std::string sym, assembly::asm_symbol info) {
 		std::string scope;
 		std::string type;
 
-		if (info.m_scope == assembly::symbol_scope::LOCAL &&
-		    !opts.local)
+		if (!filter(info))
 			return;
 
 		switch (info.m_scope) {
@@ -48,4 +44,19 @@ void print_symbol_info(const char *filename, struct info_options opts)
 		std::cout << " Scope: " << std::setw(10) << scope;
 		std::cout << " Type: "  << std::setw(10) << type << std::endl;
 	});
+}
+
+void print_symbol_info(const char *filename, struct info_options opts)
+{
+	assembly::asm_file file(filename);
+
+	file.load();
+
+	print_symbols(file, opts, [](assembly::asm_symbol &s)
+		{ return s.m_scope == assembly::symbol_scope::GLOBAL; });
+
+	if (opts.local)
+		print_symbols(file, opts, [](assembly::asm_symbol &s)
+			{ return s.m_scope == assembly::symbol_scope::LOCAL; });
+
 }
