@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <vector>
 #include <string>
 
 #include "assembly.h"
@@ -8,7 +9,8 @@
 static void print_symbols(assembly::asm_file &file, struct info_options &opts,
 			  std::function<bool(assembly::asm_symbol&)> filter)
 {
-	file.for_each_symbol([&opts, &filter](std::string sym, assembly::asm_symbol info) {
+	file.for_each_symbol([&file, &opts, &filter](std::string sym,
+						     assembly::asm_symbol info) {
 		std::string scope;
 		std::string type;
 
@@ -42,6 +44,47 @@ static void print_symbols(assembly::asm_file &file, struct info_options &opts,
 		std::cout << std::left;
 		std::cout << std::setw(10) << type << std::setw(48) << sym;
 		std::cout << " Scope: " << std::setw(10) << scope << std::endl;
+
+		if (!opts.verbose)
+			return;
+
+		std::unique_ptr<assembly::asm_object> obj(nullptr);
+
+		if (info.m_type == assembly::symbol_type::FUNCTION)
+			obj = file.get_function(sym, assembly::func_flags::STRIP_DEBUG);
+		else
+			obj = file.get_object(sym, assembly::func_flags::STRIP_DEBUG);
+
+		if (obj == nullptr)
+			return;
+
+		auto symbols = obj->get_symbols();
+
+		if (symbols.size() == 0)
+			return;
+
+		std::cout << "    Referenced symbols " << std::endl;
+		std::cout << "    (F - Function, O - Object, G - Global, L - Local, E - External):" << std::endl;
+
+		for (auto &s : symbols) {
+			char type = '-', scope = 'E';
+
+			if (file.has_symbol(s)) {
+				auto sym = file.get_symbol(s);
+
+				if (sym.m_type == assembly::symbol_type::FUNCTION)
+					type = 'F';
+				else if (sym.m_type == assembly::symbol_type::OBJECT)
+					type = 'O';
+
+				if (sym.m_scope == assembly::symbol_scope::GLOBAL)
+					scope = 'G';
+				else if (sym.m_scope == assembly::symbol_scope::LOCAL)
+					scope = 'L';
+			}
+
+			std::cout << "        " << s << " (" << type << scope << ')' << std::endl;
+		}
 	});
 }
 
