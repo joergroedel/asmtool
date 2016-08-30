@@ -23,15 +23,13 @@
 #include "copy.h"
 #include "info.h"
 
-using namespace std;
-
 void usage(const char *cmd)
 {
-	cout << "Usage: " << cmd << " <subcommand> <options>" << endl;
-	cout << "Available subcommands:" << endl;
-	cout << "        diff - Show changed functions between assembly files" << endl;
-	cout << "        copy - Copy specific symbols out of assembly files" << endl;
-	cout << "        help - Print this message" << endl;
+	std::cout << "Usage: " << cmd << " <subcommand> <options>" << std::endl;
+	std::cout << "Available subcommands:" << std::endl;
+	std::cout << "        diff - Show changed functions between assembly files" << std::endl;
+	std::cout << "        copy - Copy specific symbols out of assembly files" << std::endl;
+	std::cout << "        help - Print this message" << std::endl;
 }
 
 enum {
@@ -64,15 +62,15 @@ static struct option diff_options[] = {
 
 static void usage_diff(const char *cmd)
 {
-	cout << "Usage: " << cmd << " diff [options] old_file new_file" << endl;
-	cout << "Options:" << endl;
-	cout << "    --help, -h    - Print this help message" << endl;
-	cout << "    --show, -s    - Show differences between functions" << endl;
-	cout << "    --full, -f    - Print diff of full function" << endl;
-	cout << "    --pretty, -p  - Print a side-by-side diff" << endl;
-	cout << "    --color, -c   - Print diff in colors" << endl;
-	cout << "    --no-color,   - Use no colors" << endl;
-	cout << "    -U <num>      - Lines of context around changes" << endl;
+	std::cout << "Usage: " << cmd << " diff [options] old_file new_file" << std::endl;
+	std::cout << "Options:" << std::endl;
+	std::cout << "    --help, -h    - Print this help message" << std::endl;
+	std::cout << "    --show, -s    - Show differences between functions" << std::endl;
+	std::cout << "    --full, -f    - Print diff of full function" << std::endl;
+	std::cout << "    --pretty, -p  - Print a side-by-side diff" << std::endl;
+	std::cout << "    --color, -c   - Print diff in colors" << std::endl;
+	std::cout << "    --no-color,   - Use no colors" << std::endl;
+	std::cout << "    -U <num>      - Lines of context around changes" << std::endl;
 }
 
 static int do_diff(const char *cmd, int argc, char **argv)
@@ -107,7 +105,7 @@ static int do_diff(const char *cmd, int argc, char **argv)
 			diff_opts.pretty = true;
 			break;
 		case 'U':
-			diff_opts.context = max(atoi(optarg), 0);
+			diff_opts.context = std::max(atoi(optarg), 0);
 			break;
 		case OPTION_DIFF_COLOR:
 		case 'c':
@@ -123,7 +121,7 @@ static int do_diff(const char *cmd, int argc, char **argv)
 	}
 
 	if (optind + 2 > argc) {
-		cerr << "Two file parameters required" << endl;
+		std::cerr << "Two file parameters required" << std::endl;
 		usage_diff(cmd);
 		return 1;
 	}
@@ -158,10 +156,10 @@ static struct option copy_options[] = {
 
 static void usage_copy(const char *cmd)
 {
-	cout << "Usage: " << cmd << " copy [options] filename [functions...]" << endl;
-	cout << "Options:" << endl;
-	cout << "    --help, -h              - Print this help message" << endl;
-	cout << "    --output, -o <filename> - Destination file, default is stdout" << endl;
+	std::cout << "Usage: " << cmd << " copy [options] filename [functions...]" << std::endl;
+	std::cout << "Options:" << std::endl;
+	std::cout << "    --help, -h              - Print this help message" << std::endl;
+	std::cout << "    --output, -o <filename> - Destination file, default is stdout" << std::endl;
 }
 
 static int do_copy(const char *cmd, int argc, char **argv)
@@ -223,15 +221,15 @@ static struct option info_options[] = {
 
 static void usage_info(const char *cmd)
 {
-	cout << "Usage: " << cmd << " info [options] filename[:function]" << endl;
-	cout << "Options:" << endl;
-	cout << "    --help, -h         - Print this help message" << endl;
-	cout << "    --verbose          - Print symbols referenced by each function" << endl;
-	cout << "    --functions, -f    - Print function-type symbols (default)" << endl;
-	cout << "    --objects, -o      - Print object-type symbols" << endl;
-	cout << "    --global, -g       - Print global symbols (default)" << endl;
-	cout << "    --local, -l        - Print local symbols" << endl;
-	cout << "    --all, -a          - Print all symbols" << endl;
+	std::cout << "Usage: " << cmd << " info [options] filename[:function]" << std::endl;
+	std::cout << "Options:" << std::endl;
+	std::cout << "    --help, -h         - Print this help message" << std::endl;
+	std::cout << "    --verbose          - Print symbols referenced by each function" << std::endl;
+	std::cout << "    --functions, -f    - Print function-type symbols (default)" << std::endl;
+	std::cout << "    --objects, -o      - Print object-type symbols" << std::endl;
+	std::cout << "    --global, -g       - Print global symbols (default)" << std::endl;
+	std::cout << "    --local, -l        - Print local symbols" << std::endl;
+	std::cout << "    --all, -a          - Print all symbols" << std::endl;
 }
 
 static int do_info(const char *cmd, int argc, char **argv)
@@ -313,7 +311,7 @@ static int do_info(const char *cmd, int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-	string command;
+	std::string command;
 	int ret = 0;
 
 	if (argc < 2) {
@@ -332,7 +330,7 @@ int main(int argc, char **argv)
 	else if (command == "help")
 		usage(argv[0]);
 	else {
-		cerr << "Unknown sub-command: " << command << endl;
+		std::cerr << "Unknown sub-command: " << command << std::endl;
 		usage(argv[0]);
 		ret = 1;
 	}
