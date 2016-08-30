@@ -45,6 +45,9 @@ enum {
 	OPTION_COPY_OUTPUT,
 	OPTION_INFO_HELP,
 	OPTION_INFO_VERBOSE,
+	OPTION_INFO_FUNCTIONS,
+	OPTION_INFO_OBJECTS,
+	OPTION_INFO_GLOBAL,
 	OPTION_INFO_LOCAL,
 };
 
@@ -207,30 +210,37 @@ static int do_copy(const char *cmd, int argc, char **argv)
 }
 
 static struct option info_options[] = {
-	{ "help",	no_argument,		0, OPTION_INFO_HELP	},
-	{ "verbose",	no_argument,		0, OPTION_INFO_VERBOSE	},
-	{ "local",	no_argument,		0, OPTION_INFO_LOCAL	},
-	{ 0,		0,			0, 0			}
+	{ "help",	no_argument,		0, OPTION_INFO_HELP		},
+	{ "verbose",	no_argument,		0, OPTION_INFO_VERBOSE		},
+	{ "functions",	no_argument,		0, OPTION_INFO_FUNCTIONS	},
+	{ "objects",	no_argument,		0, OPTION_INFO_OBJECTS		},
+	{ "global",	no_argument,		0, OPTION_INFO_GLOBAL		},
+	{ "local",	no_argument,		0, OPTION_INFO_LOCAL		},
+	{ 0,		0,			0, 0				}
 };
 
 static void usage_info(const char *cmd)
 {
 	cout << "Usage: " << cmd << " info [options] filename[:function]" << endl;
 	cout << "Options:" << endl;
-	cout << "    --help, -h   - Print this help message" << endl;
-	cout << "    --verbose    - Print symbols referenced by each function" << endl;
-	cout << "    --local      - Print also local symbols" << endl;
+	cout << "    --help, -h         - Print this help message" << endl;
+	cout << "    --verbose          - Print symbols referenced by each function" << endl;
+	cout << "    --functions, -f    - Print function-type symbols (default)" << endl;
+	cout << "    --objects, -o      - Print object-type symbols" << endl;
+	cout << "    --global, -g       - Print global symbols (default)" << endl;
+	cout << "    --local, -l        - Print local symbols" << endl;
 }
 
 static int do_info(const char *cmd, int argc, char **argv)
 {
+	bool f_cmd = false, g_cmd = false;
 	std::string filename, fn_name;
 	struct info_options opts;
 
 	while (true) {
 		int opt_idx, c;
 
-		c = getopt_long(argc, argv, "vl", info_options, &opt_idx);
+		c = getopt_long(argc, argv, "hvfogl", info_options, &opt_idx);
 		if (c == -1)
 			break;
 
@@ -243,12 +253,32 @@ static int do_info(const char *cmd, int argc, char **argv)
 		case 'v':
 			opts.verbose = true;
 			break;
+		case OPTION_INFO_FUNCTIONS:
+		case 'f':
+			f_cmd = true;
+			break;
+		case OPTION_INFO_OBJECTS:
+		case 'o':
+			opts.functions = false;
+			opts.objects   = true;
+			break;
+		case OPTION_INFO_GLOBAL:
+		case 'g':
+			g_cmd = true;
+			break;
 		case OPTION_INFO_LOCAL:
 		case 'l':
-			opts.local = true;
+			opts.global = false;
+			opts.local  = true;
 			break;
 		}
 	}
+
+	if (!opts.functions)
+		opts.functions = f_cmd;
+
+	if (!opts.global)
+		opts.global = g_cmd;
 
 	if (optind + 1 > argc) {
 		std::cerr << "Error: Filename required" << std::endl;

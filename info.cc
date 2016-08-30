@@ -52,11 +52,23 @@ void print_symbol_info(const char *filename, struct info_options opts)
 
 	file.load();
 
+	if (opts.functions && opts.global)
 	print_symbols(file, opts, [](assembly::asm_symbol &s)
-		{ return s.m_scope == assembly::symbol_scope::GLOBAL; });
+		{ return s.m_type == assembly::symbol_type::FUNCTION &&
+			 s.m_scope == assembly::symbol_scope::GLOBAL; });
 
-	if (opts.local)
+	if (opts.functions && opts.local)
 		print_symbols(file, opts, [](assembly::asm_symbol &s)
-			{ return s.m_scope == assembly::symbol_scope::LOCAL; });
+			{ return s.m_type == assembly::symbol_type::FUNCTION &&
+				 s.m_scope == assembly::symbol_scope::LOCAL; });
 
+	if (opts.objects && opts.global)
+	print_symbols(file, opts, [](assembly::asm_symbol &s)
+		{ return s.m_type == assembly::symbol_type::OBJECT &&
+			 s.m_scope == assembly::symbol_scope::GLOBAL; });
+
+	if (opts.objects && opts.local)
+		print_symbols(file, opts, [](assembly::asm_symbol &s)
+			{ return s.m_type == assembly::symbol_type::OBJECT &&
+				 s.m_scope == assembly::symbol_scope::LOCAL; });
 }
