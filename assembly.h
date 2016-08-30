@@ -6,7 +6,8 @@
  * Author: Joerg Roedel <jroedel@suse.de>
  */
 
-#ifndef __NEWDATA_H
+#ifndef __ASSEMBLY_H
+#define __ASSEMBLY_H
 
 #include <vector>
 #include <string>

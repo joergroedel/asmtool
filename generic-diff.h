@@ -6,8 +6,8 @@
  * Author: Joerg Roedel <jroedel@suse.de>
  */
 
-#ifndef __NEWDIFF_H
-#define __NEWDIFF_H
+#ifndef __GENERICDIFF_H
+#define __GENERICDIFF_H
 
 #include <memory>
 
