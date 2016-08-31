@@ -142,3 +142,13 @@ std::string base_name(std::string fname)
 
 	return fname;
 }
+
+std::string base_fn_name(std::string fn_name)
+{
+	auto pos = fn_name.find_first_of(".");
+
+	if (pos != std::string::npos)
+		fn_name = fn_name.substr(0, pos);
+
+	return fn_name;
+}

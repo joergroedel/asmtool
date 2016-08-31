@@ -281,6 +281,12 @@ namespace assembly {
 	{
 		return m_stmt;
 	}
+
+	std::string asm_statement::instr() const
+	{
+		return m_instr;
+	}
+
 	void asm_statement::set_instr(std::string instr)
 	{
 		m_instr = instr;

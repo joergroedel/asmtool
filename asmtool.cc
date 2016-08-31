@@ -448,7 +448,7 @@ int main(int argc, char **argv)
 	else if (command == "show")
 		ret = do_show(argv[0], argc - 1, argv + 1);
 	else if (command == "cg" || command == "callgraph")
-		ret = do_show(argv[0], argc - 1, argv + 1);
+		ret = do_callgraph(argv[0], argc - 1, argv + 1);
 	else if (command == "help")
 		usage(argv[0]);
 	else {
