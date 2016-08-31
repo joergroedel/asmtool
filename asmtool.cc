@@ -395,6 +395,7 @@ static void usage_cg(const char *cmd)
 	std::cout << "Options:" << std::endl;
 	std::cout << "    --help, -h          - Print this help message" << std::endl;
 	std::cout << "    --output, -o <file> - Output filename (default: callgraph.dot)" << std::endl;
+	std::cout << "    --external, -e      - Include external symbols in call-graph" << std::endl;
 }
 
 static int do_callgraph(const char *cmd, int argc, char **argv)
