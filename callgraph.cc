@@ -72,6 +72,7 @@ static void generate_callgraph_from_functions(std::vector<assembly::asm_file> &f
 					      const struct cg_options &opts)
 {
 	std::vector<std::string> new_functions = functions;
+	unsigned iterations = 0;
 
 	while (new_functions.size() > 0) {
 		std::vector<std::string> tmp_functions;
@@ -107,6 +108,9 @@ static void generate_callgraph_from_functions(std::vector<assembly::asm_file> &f
 		}
 
 		new_functions = std::move(tmp_functions);
+
+		if (++iterations >= opts.maxdepth)
+			break;
 	}
 }
 

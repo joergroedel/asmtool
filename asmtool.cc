@@ -58,6 +58,7 @@ enum {
 	OPTION_CG_OUTPUT,
 	OPTION_CG_EXTERNAL,
 	OPTION_CG_FUNCTION,
+	OPTION_CG_MAXDEPTH,
 };
 
 static struct option diff_options[] = {
@@ -388,6 +389,7 @@ static struct option cg_options[] = {
 	{ "output",	required_argument,	0, OPTION_CG_OUTPUT		},
 	{ "external",	no_argument,		0, OPTION_CG_EXTERNAL		},
 	{ "function",	required_argument,	0, OPTION_CG_FUNCTION		},
+	{ "max-depth",	required_argument,	0, OPTION_CG_MAXDEPTH		},
 	{ 0,		0,			0, 0				}
 };
 
@@ -399,6 +401,8 @@ static void usage_cg(const char *cmd)
 	std::cout << "    --output, -o <file>   - Output filename (default: callgraph.dot)" << std::endl;
 	std::cout << "    --external, -e        - Include external symbols in call-graph" << std::endl;
 	std::cout << "    --function, -f <name> - Include only symbols reachable from function(s)" << std::endl;
+	std::cout << "    --max-depth <num>     - Limits the maximum call-depth included in the" << std::endl;
+	std::cout << "                            graph when --function is used" << std::endl;
 }
 
 static int do_callgraph(const char *cmd, int argc, char **argv)
@@ -429,6 +433,9 @@ static int do_callgraph(const char *cmd, int argc, char **argv)
 		case OPTION_CG_FUNCTION:
 		case 'f':
 			opts.functions.emplace_back(optarg);
+			break;
+		case OPTION_CG_MAXDEPTH:
+			opts.maxdepth = std::max(atoi(optarg), 1);
 			break;
 		default:
 			usage_cg(cmd);

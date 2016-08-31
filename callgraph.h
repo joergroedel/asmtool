@@ -17,9 +17,11 @@ struct cg_options {
 	std::vector<std::string> functions;
 	std::string output_file;
 	bool include_external;
+	unsigned maxdepth;
 
 	inline cg_options()
-		: output_file("callgraph.dot"), include_external(false)
+		: output_file("callgraph.dot"), include_external(false),
+		  maxdepth(~0)
 	{}
 };
 
