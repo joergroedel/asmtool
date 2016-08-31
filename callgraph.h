@@ -14,6 +14,7 @@
 
 struct cg_options {
 	std::vector<const char*> input_files;
+	std::vector<std::string> functions;
 	std::string output_file;
 	bool include_external;
 

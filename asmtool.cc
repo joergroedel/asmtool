@@ -57,6 +57,7 @@ enum {
 	OPTION_CG_HELP,
 	OPTION_CG_OUTPUT,
 	OPTION_CG_EXTERNAL,
+	OPTION_CG_FUNCTION,
 };
 
 static struct option diff_options[] = {
@@ -386,6 +387,7 @@ static struct option cg_options[] = {
 	{ "help",	no_argument,		0, OPTION_CG_HELP		},
 	{ "output",	required_argument,	0, OPTION_CG_OUTPUT		},
 	{ "external",	no_argument,		0, OPTION_CG_EXTERNAL		},
+	{ "function",	required_argument,	0, OPTION_CG_FUNCTION		},
 	{ 0,		0,			0, 0				}
 };
 
@@ -393,9 +395,10 @@ static void usage_cg(const char *cmd)
 {
 	std::cout << "Usage: " << cmd << " callgraph [options] file(s)" << std::endl;
 	std::cout << "Options:" << std::endl;
-	std::cout << "    --help, -h          - Print this help message" << std::endl;
-	std::cout << "    --output, -o <file> - Output filename (default: callgraph.dot)" << std::endl;
-	std::cout << "    --external, -e      - Include external symbols in call-graph" << std::endl;
+	std::cout << "    --help, -h            - Print this help message" << std::endl;
+	std::cout << "    --output, -o <file>   - Output filename (default: callgraph.dot)" << std::endl;
+	std::cout << "    --external, -e        - Include external symbols in call-graph" << std::endl;
+	std::cout << "    --function, -f <name> - Include only symbols reachable from function(s)" << std::endl;
 }
 
 static int do_callgraph(const char *cmd, int argc, char **argv)
@@ -406,7 +409,7 @@ static int do_callgraph(const char *cmd, int argc, char **argv)
 	while (true) {
 		int opt_idx, c;
 
-		c = getopt_long(argc, argv, "ho:e", cg_options, &opt_idx);
+		c = getopt_long(argc, argv, "ho:ef:", cg_options, &opt_idx);
 		if (c == -1)
 			break;
 
@@ -422,6 +425,10 @@ static int do_callgraph(const char *cmd, int argc, char **argv)
 		case OPTION_CG_EXTERNAL:
 		case 'e':
 			opts.include_external = true;
+			break;
+		case OPTION_CG_FUNCTION:
+		case 'f':
+			opts.functions.emplace_back(optarg);
 			break;
 		default:
 			usage_cg(cmd);
