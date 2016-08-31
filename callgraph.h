@@ -11,6 +11,14 @@
 
 #include <string>
 
-void generate_callgraph(const char *);
+struct cg_options {
+	std::string output_file;
+
+	inline cg_options()
+		: output_file("callgraph.dot")
+	{}
+};
+
+void generate_callgraph(const char *, const struct cg_options&);
 
 #endif

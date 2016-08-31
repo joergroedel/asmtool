@@ -55,6 +55,7 @@ enum {
 	OPTION_INFO_ALL,
 	OPTION_SHOW_HELP,
 	OPTION_CG_HELP,
+	OPTION_CG_OUTPUT,
 };
 
 static struct option diff_options[] = {
@@ -382,6 +383,7 @@ static int do_show(const char *cmd, int argc, char **argv)
 
 static struct option cg_options[] = {
 	{ "help",	no_argument,		0, OPTION_CG_HELP		},
+	{ "output",	required_argument,	0, OPTION_CG_OUTPUT		},
 	{ 0,		0,			0, 0				}
 };
 
@@ -389,17 +391,19 @@ static void usage_cg(const char *cmd)
 {
 	std::cout << "Usage: " << cmd << " callgraph [options] filename" << std::endl;
 	std::cout << "Options:" << std::endl;
-	std::cout << "    --help, -h         - Print this help message" << std::endl;
+	std::cout << "    --help, -h          - Print this help message" << std::endl;
+	std::cout << "    --output, -o <file> - Output filename (default: callgraph.dot)" << std::endl;
 }
 
 static int do_callgraph(const char *cmd, int argc, char **argv)
 {
+	struct cg_options opts;
 	std::string filename;
 
 	while (true) {
 		int opt_idx, c;
 
-		c = getopt_long(argc, argv, "h", cg_options, &opt_idx);
+		c = getopt_long(argc, argv, "ho:", cg_options, &opt_idx);
 		if (c == -1)
 			break;
 
@@ -408,6 +412,10 @@ static int do_callgraph(const char *cmd, int argc, char **argv)
 		case 'h':
 			usage_cg(cmd);
 			return 0;
+		case OPTION_CG_OUTPUT:
+		case 'o':
+			opts.output_file = optarg;
+			break;
 		default:
 			usage_cg(cmd);
 			return 1;
@@ -422,7 +430,7 @@ static int do_callgraph(const char *cmd, int argc, char **argv)
 
 	filename = argv[optind++];
 
-	generate_callgraph(filename.c_str());
+	generate_callgraph(filename.c_str(), opts);
 
 	return 0;
 }

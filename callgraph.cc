@@ -63,9 +63,9 @@ static void cg_from_one_function(assembly::asm_file &file,
 	of << " };" << std::endl;
 }
 
-void generate_callgraph(const char *filename)
+void generate_callgraph(const char *filename, const struct cg_options &opts)
 {
-	const char *output_file = "callgraph.dot";
+	const char *output_file = opts.output_file.c_str();
 	std::ofstream of;
 
 	assembly::asm_file file(filename);
