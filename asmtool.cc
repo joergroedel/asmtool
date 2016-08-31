@@ -17,6 +17,7 @@
 #include <getopt.h>
 #include <unistd.h>
 
+#include "callgraph.h"
 #include "assembly.h"
 #include "helper.h"
 #include "diff.h"
@@ -28,11 +29,12 @@ void usage(const char *cmd)
 {
 	std::cout << "Usage: " << cmd << " <subcommand> <options>" << std::endl;
 	std::cout << "Available subcommands:" << std::endl;
-	std::cout << "        diff - Show changed functions between assembly files" << std::endl;
-	std::cout << "        copy - Copy specific symbols out of assembly files" << std::endl;
-	std::cout << "        info - Print info about symbols in an assembly file" << std::endl;
-	std::cout << "        show - Print assembly of a symbol as parsed by the tool" << std::endl;
-	std::cout << "        help - Print this message" << std::endl;
+	std::cout << "        diff          - Show changed functions between assembly files" << std::endl;
+	std::cout << "        copy          - Copy specific symbols out of assembly files" << std::endl;
+	std::cout << "        info          - Print info about symbols in an assembly file" << std::endl;
+	std::cout << "        show          - Print assembly of a symbol as parsed by the tool" << std::endl;
+	std::cout << "        cg, callgraph - Generate a call-graph from assembly" << std::endl;
+	std::cout << "        help          - Print this message" << std::endl;
 }
 
 enum {
@@ -52,6 +54,7 @@ enum {
 	OPTION_INFO_LOCAL,
 	OPTION_INFO_ALL,
 	OPTION_SHOW_HELP,
+	OPTION_CG_HELP,
 };
 
 static struct option diff_options[] = {
@@ -377,6 +380,53 @@ static int do_show(const char *cmd, int argc, char **argv)
 	return 0;
 }
 
+static struct option cg_options[] = {
+	{ "help",	no_argument,		0, OPTION_CG_HELP		},
+	{ 0,		0,			0, 0				}
+};
+
+static void usage_cg(const char *cmd)
+{
+	std::cout << "Usage: " << cmd << " callgraph [options] filename" << std::endl;
+	std::cout << "Options:" << std::endl;
+	std::cout << "    --help, -h         - Print this help message" << std::endl;
+}
+
+static int do_callgraph(const char *cmd, int argc, char **argv)
+{
+	std::string filename;
+
+	while (true) {
+		int opt_idx, c;
+
+		c = getopt_long(argc, argv, "h", cg_options, &opt_idx);
+		if (c == -1)
+			break;
+
+		switch (c) {
+		case OPTION_CG_HELP:
+		case 'h':
+			usage_cg(cmd);
+			return 0;
+		default:
+			usage_cg(cmd);
+			return 1;
+		}
+	}
+
+	if (optind + 1 > argc) {
+		std::cerr << "Error: Filename required" << std::endl;
+		usage_show(cmd);
+		return 1;
+	}
+
+	filename = argv[optind++];
+
+	generate_callgraph(filename.c_str());
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	std::string command;
@@ -396,6 +446,8 @@ int main(int argc, char **argv)
 	else if (command == "info")
 		ret = do_info(argv[0], argc - 1, argv + 1);
 	else if (command == "show")
+		ret = do_show(argv[0], argc - 1, argv + 1);
+	else if (command == "cg" || command == "callgraph")
 		ret = do_show(argv[0], argc - 1, argv + 1);
 	else if (command == "help")
 		usage(argv[0]);
