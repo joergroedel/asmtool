@@ -29,7 +29,7 @@ static void cg_from_one_function(assembly::asm_file &file,
 	if (fn == nullptr)
 		return;
 
-	fn->for_each_statement([&result, &rs_name](assembly::asm_statement &stmt) {
+	fn->for_each_statement([&result, &rs_name, &opts](assembly::asm_statement &stmt) {
 		if (stmt.type() != assembly::stmt_type::INSTRUCTION)
 			return;
 
@@ -38,16 +38,22 @@ static void cg_from_one_function(assembly::asm_file &file,
 			return;
 
 		// Now we have a call instruction - find the target
-		stmt.param(0, [&result, &rs_name](const assembly::asm_param &param) {
+		stmt.param(0, [&result, &rs_name, &opts](const assembly::asm_param &param) {
 			if (!param.tokens()) {
 				std::cerr << "Error: Empty param in call instruction" << std::endl;
 				return;
 			}
-			param.token(0, [&result, &rs_name](enum assembly::token_type type, std::string token) {
+			param.token(0, [&result, &rs_name, &opts](enum assembly::token_type type, std::string token) {
 				if (type != assembly::token_type::IDENTIFIER)
 					return;
 
-				result[rs_name].insert(base_fn_name(token));
+				std::string insert_token = base_fn_name(token);
+
+				if ((result.find(insert_token) == result.end()) &&
+				    !opts.include_external)
+					return;
+
+				result[rs_name].insert(insert_token);
 			});
 		});
 	});
@@ -65,12 +71,16 @@ void generate_callgraph(const char *filename, const struct cg_options &opts)
 
 	of.open(output_file);
 
+	// First fill the results with known symbols
 	file.for_each_symbol([&file, &results, &opts](std::string sym, assembly::asm_symbol info) {
-
 		// First check if this symbol is a function
 		if (info.m_type != assembly::symbol_type::FUNCTION)
 			return;
 
+		results[base_fn_name(sym)] = std::set<std::string>();
+	});
+
+	file.for_each_symbol([&file, &results, &opts](std::string sym, assembly::asm_symbol info) {
 		cg_from_one_function(file, sym, results, opts);
 	});
 

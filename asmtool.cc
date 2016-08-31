@@ -56,6 +56,7 @@ enum {
 	OPTION_SHOW_HELP,
 	OPTION_CG_HELP,
 	OPTION_CG_OUTPUT,
+	OPTION_CG_EXTERNAL,
 };
 
 static struct option diff_options[] = {
@@ -384,6 +385,7 @@ static int do_show(const char *cmd, int argc, char **argv)
 static struct option cg_options[] = {
 	{ "help",	no_argument,		0, OPTION_CG_HELP		},
 	{ "output",	required_argument,	0, OPTION_CG_OUTPUT		},
+	{ "external",	no_argument,		0, OPTION_CG_EXTERNAL		},
 	{ 0,		0,			0, 0				}
 };
 
@@ -403,7 +405,7 @@ static int do_callgraph(const char *cmd, int argc, char **argv)
 	while (true) {
 		int opt_idx, c;
 
-		c = getopt_long(argc, argv, "ho:", cg_options, &opt_idx);
+		c = getopt_long(argc, argv, "ho:e", cg_options, &opt_idx);
 		if (c == -1)
 			break;
 
@@ -415,6 +417,10 @@ static int do_callgraph(const char *cmd, int argc, char **argv)
 		case OPTION_CG_OUTPUT:
 		case 'o':
 			opts.output_file = optarg;
+			break;
+		case OPTION_CG_EXTERNAL:
+		case 'e':
+			opts.include_external = true;
 			break;
 		default:
 			usage_cg(cmd);

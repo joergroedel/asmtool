@@ -13,9 +13,10 @@
 
 struct cg_options {
 	std::string output_file;
+	bool include_external;
 
 	inline cg_options()
-		: output_file("callgraph.dot")
+		: output_file("callgraph.dot"), include_external(false)
 	{}
 };
 
