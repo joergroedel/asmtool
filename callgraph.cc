@@ -19,16 +19,17 @@
 using result_type = std::map<std::string, std::set<std::string> >;
 
 static void cg_from_one_function(assembly::asm_file &file,
-				 std::ofstream &of,
-				 std::string fn_name)
+				 std::string fn_name,
+				 result_type &result,
+				 const struct cg_options &opts)
 {
 	auto fn = file.get_function(fn_name, assembly::func_flags::STRIP_DEBUG);
-	std::set<std::string> targets;
+	std::string rs_name = base_fn_name(fn_name);
 
 	if (fn == nullptr)
 		return;
 
-	fn->for_each_statement([&targets](assembly::asm_statement &stmt) {
+	fn->for_each_statement([&result, &rs_name](assembly::asm_statement &stmt) {
 		if (stmt.type() != assembly::stmt_type::INSTRUCTION)
 			return;
 
@@ -37,35 +38,25 @@ static void cg_from_one_function(assembly::asm_file &file,
 			return;
 
 		// Now we have a call instruction - find the target
-		stmt.param(0, [&targets](const assembly::asm_param &param) {
+		stmt.param(0, [&result, &rs_name](const assembly::asm_param &param) {
 			if (!param.tokens()) {
 				std::cerr << "Error: Empty param in call instruction" << std::endl;
 				return;
 			}
-			param.token(0, [&targets](enum assembly::token_type type, std::string token) {
+			param.token(0, [&result, &rs_name](enum assembly::token_type type, std::string token) {
 				if (type != assembly::token_type::IDENTIFIER)
 					return;
 
-				targets.insert(token);
+				result[rs_name].insert(base_fn_name(token));
 			});
 		});
 	});
-
-	int num = 0;
-
-	of << '\t' << base_fn_name(fn_name) << " -> {";
-
-	for (auto &target : targets) {
-		if (num++)
-			of << ", ";
-		of << base_fn_name(target);
-	}
-	of << " };" << std::endl;
 }
 
 void generate_callgraph(const char *filename, const struct cg_options &opts)
 {
 	const char *output_file = opts.output_file.c_str();
+	result_type results;
 	std::ofstream of;
 
 	assembly::asm_file file(filename);
@@ -74,19 +65,30 @@ void generate_callgraph(const char *filename, const struct cg_options &opts)
 
 	of.open(output_file);
 
-	of << "digraph {" << std::endl;
-
-	// Seems to produce better results
-	of << "\trankdir=LR;" << std::endl;
-
-	file.for_each_symbol([&of, &file](std::string sym, assembly::asm_symbol info) {
+	file.for_each_symbol([&file, &results, &opts](std::string sym, assembly::asm_symbol info) {
 
 		// First check if this symbol is a function
 		if (info.m_type != assembly::symbol_type::FUNCTION)
 			return;
 
-		cg_from_one_function(file, of, sym);
+		cg_from_one_function(file, sym, results, opts);
 	});
+
+	of << "digraph {" << std::endl;
+	// rankdir=Lr seems to produce better results
+	of << "\trankdir=LR;" << std::endl;
+
+	for (auto &r : results) {
+		int num = 0;
+
+		of << '\t' << r.first << " -> {";
+		for (auto &s : r.second) {
+			if (num++)
+				of << ", ";
+			of << s;
+		}
+		of << '}' << std::endl;
+	}
 
 	of << "}" << std::endl;
 }
