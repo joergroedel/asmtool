@@ -101,16 +101,41 @@ void generate_callgraph(const struct cg_options &opts)
 	// rankdir=Lr seems to produce better results
 	of << "\trankdir=LR;" << std::endl;
 
-	for (auto &r : results) {
-		int num = 0;
+	// Print the results
+	std::string indent = "";
+	bool subgraphs = false;
 
-		of << '\t' << r.first << " -> {";
-		for (auto &s : r.second) {
-			if (num++)
-				of << ", ";
-			of << s;
+	if (files.size() > 1) {
+		indent = "\t";
+		subgraphs = true;
+	}
+
+	for (size_t idx = 0, size = files.size(); idx != size; ++idx) {
+		if (subgraphs) {
+			of << "\tsubgraph cluster_" << idx << " {" << std::endl;
+			of << "\t\tlabel=\"" << base_name(opts.input_files[idx]) << "\";" << std::endl;
 		}
-		of << '}' << std::endl;
+
+		for (auto &r : results) {
+			int num = 0;
+
+			if (sym_file_map[r.first] != idx)
+				continue;
+
+			of << indent << '\t' << r.first << " -> {";
+			for (auto &s : r.second) {
+				if (num++)
+					of << ", ";
+				of << s;
+			}
+
+			of << '}' << std::endl;
+
+		}
+
+		if (subgraphs) {
+			of << "\t}" << std::endl;
+		}
 	}
 
 	of << "}" << std::endl;
