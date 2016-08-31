@@ -6,6 +6,7 @@
  * Author: Joerg Roedel <jroedel@suse.de>
  */
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -63,11 +64,58 @@ static void cg_from_one_function(assembly::asm_file &file,
 	});
 }
 
+static void generate_callgraph_from_functions(std::vector<assembly::asm_file> &files,
+					      std::vector<std::string> &functions,
+					      std::set<std::string> &symbols,
+					      std::map<std::string, size_t> &sym_file_map,
+					      result_type &results,
+					      const struct cg_options &opts)
+{
+	std::vector<std::string> new_functions = functions;
+
+	while (new_functions.size() > 0) {
+		std::vector<std::string> tmp_functions;
+		result_type new_results;
+
+		for (size_t idx = 0, size = files.size(); idx != size; ++idx) {
+			files[idx].for_each_symbol([&files, &results, &new_results, &symbols,
+						    &opts, &idx, &new_functions, &tmp_functions]
+						   (std::string sym, assembly::asm_symbol info) {
+
+				if (info.m_type != assembly::symbol_type::FUNCTION)
+					return;
+
+				auto base_name = base_fn_name(sym);
+				auto pos = std::find(new_functions.begin(), new_functions.end(), base_name);
+
+				if (pos == new_functions.end())
+					return;
+
+				cg_from_one_function(files[idx], sym, new_results, symbols, opts);
+			});
+
+			for (auto &nr : new_results) {
+				results.emplace(nr.first, nr.second);
+
+				for (auto &s : nr.second) {
+					if (results.find(s) != results.end())
+						continue;
+
+					tmp_functions.emplace_back(s);
+				}
+			}
+		}
+
+		new_functions = std::move(tmp_functions);
+	}
+}
+
 void generate_callgraph(const struct cg_options &opts)
 {
 	const char *output_file = opts.output_file.c_str();
 	std::map<std::string, size_t> sym_file_map;
 	std::vector<assembly::asm_file> files;
+	std::vector<std::string> functions;
 	std::set<std::string> symbols;
 	result_type results;
 	std::ofstream of;
@@ -82,24 +130,32 @@ void generate_callgraph(const struct cg_options &opts)
 
 	for (size_t idx = 0, size = files.size(); idx != size; ++idx) {
 		// First fill the results with known symbols
-		files[idx].for_each_symbol([&results, &opts, &idx, &sym_file_map, &symbols]
+		files[idx].for_each_symbol([&results, &opts, &idx, &sym_file_map, &symbols, &functions]
 				     (std::string sym, assembly::asm_symbol info) {
 			// First check if this symbol is a function
 			if (info.m_type != assembly::symbol_type::FUNCTION)
 				return;
 
-			std::string base_name = base_fn_name(sym);
+			auto base_name = base_fn_name(sym);
+			auto pos = std::find(opts.functions.begin(), opts.functions.end(), base_name);
+
+			if (pos != opts.functions.end())
+				functions.emplace_back(base_name);
 
 			symbols.emplace(base_name);
 			sym_file_map[base_name] = idx;
 		});
 	}
 
-	for (size_t idx = 0, size = files.size(); idx != size; ++idx) {
-		files[idx].for_each_symbol([&files, &results, &symbols, &opts, &idx]
-					   (std::string sym, assembly::asm_symbol info) {
-			cg_from_one_function(files[idx], sym, results, symbols, opts);
-		});
+	if (functions.size() > 0) {
+		generate_callgraph_from_functions(files, functions, symbols, sym_file_map, results, opts);
+	} else {
+		for (size_t idx = 0, size = files.size(); idx != size; ++idx) {
+			files[idx].for_each_symbol([&files, &results, &symbols, &opts, &idx]
+						   (std::string sym, assembly::asm_symbol info) {
+				cg_from_one_function(files[idx], sym, results, symbols, opts);
+			});
+		}
 	}
 
 	of << "digraph {" << std::endl;
