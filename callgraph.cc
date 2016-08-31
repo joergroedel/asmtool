@@ -59,30 +59,43 @@ static void cg_from_one_function(assembly::asm_file &file,
 	});
 }
 
-void generate_callgraph(const char *filename, const struct cg_options &opts)
+void generate_callgraph(const struct cg_options &opts)
 {
 	const char *output_file = opts.output_file.c_str();
+	std::map<std::string, size_t> sym_file_map;
+	std::vector<assembly::asm_file> files;
 	result_type results;
 	std::ofstream of;
 
-	assembly::asm_file file(filename);
+	for (auto fn : opts.input_files)
+		files.emplace_back(fn);
 
-	file.load();
+	for (auto &file : files)
+		file.load();
 
 	of.open(output_file);
 
-	// First fill the results with known symbols
-	file.for_each_symbol([&file, &results, &opts](std::string sym, assembly::asm_symbol info) {
-		// First check if this symbol is a function
-		if (info.m_type != assembly::symbol_type::FUNCTION)
-			return;
+	for (size_t idx = 0, size = files.size(); idx != size; ++idx) {
+		// First fill the results with known symbols
+		files[idx].for_each_symbol([&results, &opts, &idx, &sym_file_map]
+				     (std::string sym, assembly::asm_symbol info) {
+			// First check if this symbol is a function
+			if (info.m_type != assembly::symbol_type::FUNCTION)
+				return;
 
-		results[base_fn_name(sym)] = std::set<std::string>();
-	});
+			std::string base_name = base_fn_name(sym);
 
-	file.for_each_symbol([&file, &results, &opts](std::string sym, assembly::asm_symbol info) {
-		cg_from_one_function(file, sym, results, opts);
-	});
+			results[base_name] = std::set<std::string>();
+			sym_file_map[base_name] = idx;
+		});
+	}
+
+	for (size_t idx = 0, size = files.size(); idx != size; ++idx) {
+		files[idx].for_each_symbol([&files, &results, &opts, &idx]
+					   (std::string sym, assembly::asm_symbol info) {
+			cg_from_one_function(files[idx], sym, results, opts);
+		});
+	}
 
 	of << "digraph {" << std::endl;
 	// rankdir=Lr seems to produce better results

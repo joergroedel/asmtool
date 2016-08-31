@@ -391,7 +391,7 @@ static struct option cg_options[] = {
 
 static void usage_cg(const char *cmd)
 {
-	std::cout << "Usage: " << cmd << " callgraph [options] filename" << std::endl;
+	std::cout << "Usage: " << cmd << " callgraph [options] file(s)" << std::endl;
 	std::cout << "Options:" << std::endl;
 	std::cout << "    --help, -h          - Print this help message" << std::endl;
 	std::cout << "    --output, -o <file> - Output filename (default: callgraph.dot)" << std::endl;
@@ -434,9 +434,10 @@ static int do_callgraph(const char *cmd, int argc, char **argv)
 		return 1;
 	}
 
-	filename = argv[optind++];
+	while (optind < argc)
+		opts.input_files.emplace_back(argv[optind++]);
 
-	generate_callgraph(filename.c_str(), opts);
+	generate_callgraph(opts);
 
 	return 0;
 }

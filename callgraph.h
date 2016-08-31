@@ -9,9 +9,11 @@
 #ifndef __CALLGRAPH_H
 #define __CALLGRAPH_H
 
+#include <vector>
 #include <string>
 
 struct cg_options {
+	std::vector<const char*> input_files;
 	std::string output_file;
 	bool include_external;
 
@@ -20,6 +22,6 @@ struct cg_options {
 	{}
 };
 
-void generate_callgraph(const char *, const struct cg_options&);
+void generate_callgraph(const struct cg_options&);
 
 #endif
