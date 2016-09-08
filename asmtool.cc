@@ -300,7 +300,7 @@ static int do_info(const char *cmd, int argc, char **argv)
 
 	if (optind + 1 > argc) {
 		std::cerr << "Error: Filename required" << std::endl;
-		usage_copy(cmd);
+		usage_info(cmd);
 		return 1;
 	}
 
