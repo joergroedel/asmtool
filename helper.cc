@@ -24,7 +24,9 @@ static size_t end_of_string(const std::string &line, size_t start)
 			break;
 	}
 
-	if (start == len)
+	start += 1;
+
+	if (start >= len)
 		start = std::string::npos;
 
 	return start;
@@ -56,7 +58,7 @@ std::string strip_comment(const std::string &line)
 		if (line[pos] == '#')
 			return line.substr(0,pos);
 		else
-			pos = end_of_string(line, pos) + 1;
+			pos = end_of_string(line, pos);
 	}
 
 	return line;
@@ -79,7 +81,7 @@ std::vector<std::string> split_trim(const char *delim, std::string line, unsigne
 		if (pos == std::string::npos) {
 			item = line;
 		} else if (line[pos] == '"' || line[pos] == '\'') {
-			pos = end_of_string(line, pos) + 1;
+			pos = end_of_string(line, pos);
 			continue;
 		} else {
 			item = line.substr(0, pos);

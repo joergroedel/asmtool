@@ -488,7 +488,7 @@ int main(int argc, char **argv)
 			ret = 1;
 		}
 	} catch (std::runtime_error &e) {
-		std::cerr << "Runtime Error: " << e.what() << std::endl;
+		std::cerr << "Error: " << e.what() << std::endl;
 		ret = 1;
 	}
 
