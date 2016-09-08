@@ -469,21 +469,26 @@ int main(int argc, char **argv)
 
 	command = argv[1];
 
-	if (command == "diff")
-		ret = do_diff(argv[0], argc - 1, argv + 1);
-	else if (command == "copy")
-		ret = do_copy(argv[0], argc - 1, argv + 1);
-	else if (command == "info")
-		ret = do_info(argv[0], argc - 1, argv + 1);
-	else if (command == "show")
-		ret = do_show(argv[0], argc - 1, argv + 1);
-	else if (command == "cg" || command == "callgraph")
-		ret = do_callgraph(argv[0], argc - 1, argv + 1);
-	else if (command == "help")
-		usage(argv[0]);
-	else {
-		std::cerr << "Unknown sub-command: " << command << std::endl;
-		usage(argv[0]);
+	try {
+		if (command == "diff")
+			ret = do_diff(argv[0], argc - 1, argv + 1);
+		else if (command == "copy")
+			ret = do_copy(argv[0], argc - 1, argv + 1);
+		else if (command == "info")
+			ret = do_info(argv[0], argc - 1, argv + 1);
+		else if (command == "show")
+			ret = do_show(argv[0], argc - 1, argv + 1);
+		else if (command == "cg" || command == "callgraph")
+			ret = do_callgraph(argv[0], argc - 1, argv + 1);
+		else if (command == "help")
+			usage(argv[0]);
+		else {
+			std::cerr << "Unknown sub-command: " << command << std::endl;
+			usage(argv[0]);
+			ret = 1;
+		}
+	} catch (std::runtime_error &e) {
+		std::cerr << "Runtime Error: " << e.what() << std::endl;
 		ret = 1;
 	}
 
