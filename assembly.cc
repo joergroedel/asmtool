@@ -81,6 +81,7 @@ namespace assembly {
 	// Forward declarations
 	static std::vector<std::string> line_to_statements(std::string line);
 	static bool is_valid_symbol(std::string);
+	static bool is_valid_instr_token(std::string);
 	static bool is_identifier_char(char c);
 	static bool is_register_char(char c);
 	static bool is_typeflag_char(char c);
@@ -1096,6 +1097,16 @@ namespace assembly {
 		return !isdigit(symbol[0]);
 	}
 
+	static bool is_valid_instr_token(std::string t)
+	{
+		for (auto c : t) {
+			if (!isalnum(c) && c != '.' && c != '_' && c != '-' && c != ':')
+				return false;
+		}
+
+		return true;
+	}
+
 	static bool is_identifier_char(char c)
 	{
 		return (c == '.' || c == '_'  || isalnum(c));
@@ -1140,6 +1151,9 @@ namespace assembly {
 		// Sanity check
 		if (instr.size() == 0)
 			return statement;
+
+		if (!is_valid_instr_token(instr))
+			throw std::runtime_error("Invalid input data");
 
 		// Find out the type of the statement now
 
