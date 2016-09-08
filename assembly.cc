@@ -751,11 +751,14 @@ namespace assembly {
 			throw std::runtime_error(std::string("Can't open input file ") + m_filename);
 
 		while (!in.eof()) {
+			char buffer[1024];
 			std::string line;
 
-			std::getline(in, line);
+			in.getline(buffer, 1024);
+			if (in.fail() && !in.eof())
+				throw std::runtime_error("Can't parse input data");
 
-			line = trim(strip_comment(line));
+			line = trim(strip_comment(buffer));
 
 			std::vector<std::string> stmts = line_to_statements(line);
 
