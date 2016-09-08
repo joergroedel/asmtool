@@ -82,7 +82,10 @@ std::vector<std::string> split_trim(const char *delim, std::string line, unsigne
 			item = line;
 		} else if (line[pos] == '"' || line[pos] == '\'') {
 			pos = end_of_string(line, pos);
-			continue;
+			if (pos == std::string::npos)
+				item = line;
+			else
+				continue;
 		} else {
 			item = line.substr(0, pos);
 			line = line.substr(pos + 1);
