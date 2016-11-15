@@ -36,6 +36,24 @@ static size_t end_of_string(const std::string &line, size_t start)
 	return start;
 }
 
+static size_t end_of_comment(const std::string &line, size_t start)
+{
+	size_t len = line.size();
+
+	for (start += 1; start < len; start++) {
+		if (start + 1 < len &&
+		    line[start] == '*' && line[start + 1] == '/') {
+			start += 2;
+			break;
+		}
+	}
+
+	if (start >= len)
+		start = std::string::npos;
+
+	return start;
+}
+
 std::string trim(const std::string &line)
 {
 	static const char *spaces = " \n\t\r";
@@ -50,19 +68,32 @@ std::string trim(const std::string &line)
 	return line.substr(pos1, pos2-pos1+1);
 }
 
-std::string strip_comment(const std::string &line)
+std::string strip_comment(std::string line)
 {
 	size_t pos = 0;
 
 	while (true) {
-		pos = line.find_first_of("#\"'", pos);
+		pos = line.find_first_of("#\"'/", pos);
 		if (pos == std::string::npos)
 			return line;
 
-		if (line[pos] == '#')
+		if (line[pos] == '#') {
 			return line.substr(0,pos);
-		else
+		} else if (pos + 1 != std::string::npos &&
+			 line[pos + 1] == '*') {
+			/* C-Style Comment */
+			std::string l1, l2;
+
+			l1 = line.substr(0, pos);
+			pos = end_of_comment(line, pos + 1);
+			if (pos != std::string::npos) {
+				l2 = line.substr(pos);
+				pos = l1.size();
+			}
+			line = l1 + l2;
+		} else {
 			pos = end_of_string(line, pos);
+		}
 	}
 
 	return line;
