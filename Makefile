@@ -1,6 +1,6 @@
 OBJ=$(patsubst %.cc, %.o, $(wildcard *.cc))
 DEPS=$(patsubst %.cc, %.d, $(wildcard *.cc))
-CXXFLAGS=-O3 -g -Wall -std=c++11
+CXXFLAGS=-O3 -g -Wall -std=c++11 -flto
 TARGET=asmtool
 INSTALLDIR ?= $(HOME)/bin/
 
@@ -9,7 +9,7 @@ all: $(DEPS) $(TARGET)
 -include $(DEPS)
 
 $(TARGET): ${OBJ}
-	g++ -o $@ ${OBJ}
+	g++ -flto -o $@ ${OBJ}
 
 %.d: %.cc
 	g++ -MM -c $(CXXFLAGS) $< > $@
