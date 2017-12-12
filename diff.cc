@@ -338,6 +338,14 @@ void diff_files(const char *fname1, const char *fname2, struct diff_options &opt
 			if (fn1 == nullptr || fn2 == nullptr)
 				continue;
 
+                        unsigned check1 = fn1->elements();
+                        unsigned check2 = fn2->elements();
+                        if (check1 && (std::numeric_limits<unsigned>::max() / check1) < check2) {
+                                // Matrix size overflows, can't be checked
+                                std::cout << "Unhandled:" << std::setw(13) << type_str << *it << std::endl;
+                                continue;
+                        }
+
 			assembly::asm_diff compare(*fn1, *fn2);
 
 			if (compare.is_different()) {
