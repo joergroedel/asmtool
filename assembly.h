@@ -17,6 +17,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <functional>
 
 #include "generic-diff.h"
 
