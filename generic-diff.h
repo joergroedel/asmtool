@@ -59,12 +59,12 @@ namespace diff {
 		{
 		}
 
-		void set(size_type x, size_type y, int value)
+		void set(size_type x, size_type y, size_type value)
 		{
 			m_matrix[(y * m_x) + x] = value;
 		}
 
-		int get(size_type x, size_type y) const
+		size_type get(size_type x, size_type y) const
 		{
 			return m_matrix[(y * m_x) + x];
 		}
