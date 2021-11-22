@@ -10,12 +10,14 @@
  * Author: Joerg Roedel <jroedel@suse.de>
  */
 
+#include <functional>
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
+#include <limits>
 #include <list>
 
 #include <unistd.h>

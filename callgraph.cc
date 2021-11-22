@@ -10,6 +10,7 @@
  * Author: Joerg Roedel <jroedel@suse.de>
  */
 
+#include <functional>
 #include <algorithm>
 #include <iostream>
 #include <fstream>

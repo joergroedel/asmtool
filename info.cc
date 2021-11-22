@@ -10,6 +10,7 @@
  * Author: Joerg Roedel <jroedel@suse.de>
  */
 
+#include <functional>
 #include <iostream>
 #include <iomanip>
 #include <vector>
